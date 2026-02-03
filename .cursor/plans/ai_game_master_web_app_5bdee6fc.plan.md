@@ -160,10 +160,10 @@ Characters are **playable characters** that make up the **party** for a campaign
 
 ## 5. LangGraph Game Master Graph (TypeScript)
 
-- **State**: Use `StateSchema` with `messages: MessagesValue` (and optionally `campaignId`, `rulesetId`, `worldId` for retrieval). Reducer for `messages` should append.
+- **State**: Use `StateSchema` with `messages: MessagesValue` (and optionally `campaignId`, `rulesetId`, `worldId` for retrieval, and `characterReferences?: { characterId, name }[]` for resolved @-mentions). Reducer for `messages` should append.
 - **Nodes**:
   1. **retrieve**: Input: last user message (and maybe recent messages). Output: `rulesContext: string`, `campaignContext: string`. Embed query with **sqlite-rembed** using the **configured embedding client name** (from env); run two **sqlite-vec** KNN queries filtered by `rulesetId` and `worldId`; join to chunk tables for content; concatenate into rules and campaign context strings.
-  2. **gm**: Input: state with `messages` + `rulesContext` + `campaignContext`. Build a **system message**: “You are the Game Master. Apply these rules: …” + rulesContext + “Use this world and story: …” + campaignContext + “Respond to the player and resolve their action.” Invoke the **configurable chat model** (base URL, model name, optional API key from env—OpenAI-compatible so [LM Studio](https://lmstudio.ai) and [Ollama](https://ollama.com) work by default). Return new AI message appended to state.
+  2. **gm**: Input: state with `messages` + `rulesContext` + `campaignContext` and optional `characterReferences` (resolved @-mentions: `{ characterId, name }[]`). Build a **system message** that includes rules and world context; if `characterReferences` exist, add which character IDs map to which @-mentioned names so the GM can use them for context or tool calls. Then: “You are the Game Master. Apply these rules: …” + rulesContext + “Use this world and story: …” + campaignContext + “Respond to the player and resolve their action.” Invoke the **configurable chat model** (base URL, model name, optional API key from env—OpenAI-compatible so [LM Studio](https://lmstudio.ai) and [Ollama](https://ollama.com) work by default). Return new AI message appended to state.
 - **Graph**: `START → retrieve → gm → END`. No tools required for MVP; optional later (e.g. dice, lookup).
 - **Compilation**: `StateGraph(State).addNode("retrieve", retrieveNode).addNode("gm", gmNode).addEdge(START, "retrieve").addEdge("retrieve", "gm").addEdge("gm", END).compile()`.
 - **Streaming**: Use `graph.stream(inputs, { streamMode: "messages" })` and, in the API route, forward token stream to the client (e.g. `ReadableStream` or SSE). Persist the full assistant message to `campaignMessages` after the stream completes.
@@ -172,14 +172,15 @@ Characters are **playable characters** that make up the **party** for a campaign
 
 ## 6. API Route for Sending Messages and Streaming GM Response
 
-- **Route**: e.g. `POST /api/campaigns/:campaignId/messages` or a resource route that accepts JSON body `{ content: string }`.
+- **Route**: e.g. `POST /api/campaigns/:campaignId/messages` or a resource route that accepts JSON body `{ content: string }` (the message text, which may contain character references like `@CharacterName`).
 - **Flow**:
-  1. Resolve campaign by `campaignId` and ensure it belongs to the current user. Load `rulesetId` and `worldId`.
-  2. Load full message history for the campaign from `campaignMessages`, convert to LangChain message format.
-  3. Append the new user message; persist it to `campaignMessages`.
-  4. Invoke the LangGraph graph with state `{ messages }` and config that includes `campaignId`, `rulesetId`, `worldId` (or pass them in state) so the retrieve node can run RAG.
-  5. Stream the graph with `streamMode: "messages"`. Pipe the stream to the HTTP response (e.g. `ReadableStream` or SSE). On the client, consume the stream and append tokens to the UI.
-  6. When stream ends, take the full assistant reply from the graph final state and insert one row into `campaignMessages` (role `assistant`, content = full text).
+  1. Resolve campaign by `campaignId` and ensure it belongs to the current user. Load `rulesetId`, `worldId`, and the campaign’s **characters** (id and name).
+  2. **Resolve character references**: Parse the submitted `content` for patterns like `@CharacterName` (e.g. regex or split on `@` and match following word/phrase). For each match, look up the campaign’s characters by name and map to `characterId`. Build a list of **resolved references** (e.g. `{ characterId, name }[]`). Unresolved @-mentions (no matching character) can be left as-is in the content or flagged; store the content as-is in `campaignMessages`.
+  3. Load full message history for the campaign from `campaignMessages`, convert to LangChain message format.
+  4. Append the new user message; persist it to `campaignMessages` (role `user`, content = raw text with `@CharacterName`).
+  5. Invoke the LangGraph graph with state `{ messages }` and config that includes `campaignId`, `rulesetId`, `worldId` and **resolved character references** (e.g. `characterReferences: { characterId, name }[]`) so the retrieve node and GM node can use them. The GM can receive this as context (e.g. “The player is referring to these characters: …”) to drive the response or future tool calls (e.g. apply effect to characterId).
+  6. Stream the graph with `streamMode: "messages"`. Pipe the stream to the HTTP response (e.g. `ReadableStream` or SSE). On the client, consume the stream and append tokens to the UI.
+  7. When stream ends, take the full assistant reply from the graph final state and insert one row into `campaignMessages` (role `assistant`, content = full text).
 - **Error handling**: Return 4xx/5xx with a clear body; on client show a toast or inline error.
 
 ---
@@ -204,8 +205,9 @@ Characters are **playable characters** that make up the **party** for a campaign
 ## 8. Campaign Chat UI (Detail)
 
 - **Layout**: MUI `Box`/`Paper` for message list; sticky input at bottom. Message bubbles: user vs assistant; assistant messages support streaming (append tokens to the last message until stream ends).
-- **State**: When user submits: (1) Optimistically append user message to UI, (2) POST to streaming endpoint, (3) Create a placeholder assistant message and append streamed tokens to it, (4) On stream end, replace placeholder with final message (and optionally refetch from server to sync with DB).
-- **Accessibility**: Focus management, aria-labels for input and send button.
+- **Character @-mentions**: When the user types **`@`** in the campaign chat input, show an **autocomplete popover** listing all **characters** belonging to the current campaign (from loader data). On selection, insert the character reference into the text (e.g. `@CharacterName`). The composed message can look like: _"Give `@CharacterName` a health potion"_. Display mentions in the textarea as plain text `@CharacterName` (or with subtle styling). On submit, send the message content as-is; the backend resolves `@CharacterName` to `characterId` and passes that context to the AI.
+- **State**: When user submits: (1) Optimistically append user message to UI, (2) POST to streaming endpoint (body: message content, optionally structured character refs if pre-resolved on client), (3) Create a placeholder assistant message and append streamed tokens to it, (4) On stream end, replace placeholder with final message (and optionally refetch from server to sync with DB).
+- **Accessibility**: Focus management, aria-labels for input and send button; ensure @-mention popover is keyboard-navigable and announced.
 
 ---
 
@@ -226,7 +228,7 @@ Characters are **playable characters** that make up the **party** for a campaign
 | LangGraph  | `server/gm/graph.ts` (state + nodes + compile), `server/gm/nodes/retrieve.ts`, `server/gm/nodes/gm.ts`                                                                                                                                                                                                                                                                                                                        |
 | API        | `app/routes/api.campaigns.$campaignId.messages.ts` (POST: campaign chat, stream). Optional: `api.campaigns.$campaignId.characters.chat.ts` (POST: character-creation GM chat, stream) and `api.campaigns.$campaignId.character-suggestions.ts` (GET: suggested races, classes, skills, stats, items from RAG) or fold suggestions into character form loader.                                                                 |
 | Upload     | `app/routes/rulesets.new.tsx` (action: parse, chunk, embed, save), `app/routes/worlds.new.tsx`                                                                                                                                                                                                                                                                                                                                |
-| Chat       | `app/routes/campaigns.$id.tsx` (loader: campaign + characters + messages), `app/components/CampaignChat.tsx`, `app/components/MessageList.tsx`                                                                                                                                                                                                                                                                                |
+| Chat       | `app/routes/campaigns.$id.tsx` (loader: campaign + characters + messages), `app/components/CampaignChat.tsx`, `app/components/MessageList.tsx`. **@-mentions**: input component (or wrapper) that detects `@`, shows MUI Autocomplete/Popover with campaign characters, and inserts `@CharacterName` into the message text; characters list from loader.                                                                      |
 | Characters | `app/routes/campaigns.$id.characters.new.tsx`, `app/routes/campaigns.$id.characters.$characterId.tsx` (create/edit). `app/components/CharacterForm.tsx` (MUI form with autocomplete/suggestions), `app/components/CharacterCreationChat.tsx` (GM chat thread for character suggestion; on suggested character, update form preview). Optional: `server/gm/characterGraph.ts` or mode in main graph for character-creation GM. |
 | Styles     | `app/components/*.module.css` next to components                                                                                                                                                                                                                                                                                                                                                                              |
 
