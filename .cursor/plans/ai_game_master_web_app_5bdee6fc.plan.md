@@ -62,10 +62,10 @@ flowchart TB
   - UI: `@mui/material`, `@emotion/react`, `@emotion/styled`.
   - Styling: **CSS Modules** only (no Tailwind). Use `*.module.css` next to components.
   - Backend/DB: `better-sqlite3` for SQLite; **sqlite-vec** (npm: `sqlite-vec`) and **sqlite-rembed** (load extension from prebuilt binary or [sqlite-dist](https://github.com/asg017/sqlite-dist)).
-  - RAG: **sqlite-vec** ([github.com/asg017/sqlite-vec](https://github.com/asg017/sqlite-vec)) for vector storage and KNN search—install via `npm install sqlite-vec`, load with `sqliteVec.load(db)` (compatible with better-sqlite3). **sqlite-rembed** ([github.com/asg017/sqlite-rembed](https://github.com/asg017/sqlite-rembed)) for text embeddings via remote APIs (OpenAI, Nomic, Ollama, etc.)—load the extension binary (e.g. from [sqlite-dist](https://github.com/asg017/sqlite-dist) or build from source) with `db.loadExtension('path/to/rembed0')`. Register embedding client once: `INSERT INTO temp.rembed_clients(name, options) VALUES ('text-embedding-3-small', 'openai')` (requires `OPENAI_API_KEY`).
-  - LLM: `@langchain/langgraph`, `@langchain/core`, `@langchain/openai` (or `@langchain/anthropic`) for the GM chat model only.
+  - RAG: **sqlite-vec** for vector storage/KNN; **sqlite-rembed** for embeddings. Embedding **client and model** are configured via environment variables (see §11); at app init, register the rembed client from env (e.g. OpenAI-format URL for LM Studio, or built-in `ollama` for [Ollama](https://ollama.com)).
+  - LLM: `@langchain/langgraph`, `@langchain/core`, and a single chat model integration that supports **OpenAI-compatible** base URL and model name (e.g. `@langchain/openai` with `configuration.baseURL` and `configuration.model` from env). Use this for the GM so the same code works with [LM Studio](https://lmstudio.ai) (default e.g. `http://localhost:1234/v1`), [Ollama](https://ollama.com) (default `http://localhost:11434/v1`), or hosted OpenAI/Anthropic-compatible APIs.
   - File parsing: `pdf-parse` for PDF; markdown and plain text via `fs`/string handling.
-- **Config**: Ensure `react-router.config.ts` and `vite.config.ts` are set for framework mode (server-side loaders/actions). Root layout in `app/root.tsx` with MUI `ThemeProvider` and React Router `Outlet`.
+- **Config**: Ensure `react-router.config.ts` and `vite.config.ts` are set for framework mode. Root layout in `app/root.tsx` with MUI `ThemeProvider` and React Router `Outlet`. **LLM and embedding provider**: read from env on server startup; no hardcoded URLs or model names (see §11).
 
 ---
 
@@ -95,9 +95,9 @@ flowchart TB
 - **vec_ruleset_chunks**: `create virtual table vec_ruleset_chunks using vec0(embedding float[1536], ruleset_id text)`. Insert with `rowid` = `ruleset_chunks.id` so `JOIN ruleset_chunks ON ruleset_chunks.id = vec_ruleset_chunks.rowid` works. Use **auxiliary column** `ruleset_id` so retrieval can filter: `WHERE embedding MATCH ? AND ruleset_id = ? ORDER BY distance LIMIT k`.
 - **vec_campaign_template_chunks**: Same pattern with `embedding float[1536]`, `campaign_template_id text`; rowid = `campaign_template_chunks.id`.
 
-Embedding dimension (e.g. 1536) must match the **sqlite-rembed** client (e.g. OpenAI `text-embedding-3-small`). Use that dimension in the vec0 schema.
+Embedding dimension (e.g. 1536 for `text-embedding-3-small`, or model-specific for Ollama) must match the configured embedding model. Define the dimension in env or a config module (e.g. `EMBEDDING_DIMENSION`) and use it when creating vec0 tables so the same code works with different providers.
 
-**sqlite-rembed**: Run once at app init (or in a migration): `INSERT INTO temp.rembed_clients(name, options) VALUES ('text-embedding-3-small', 'openai')` so `rembed('text-embedding-3-small', ?)` can be used in SQL. Set `OPENAI_API_KEY` in the environment.
+**sqlite-rembed**: At app init, register the embedding client from **environment variables** (see §11). Examples: OpenAI-format (for LM Studio or OpenAI) via custom URL; or built-in `ollama` for Ollama (`http://localhost:11434/api/embeddings`). The client name used in `rembed(client_name, ?)` should be the configured model identifier (e.g. `nomic-embed-text` for Ollama, or a custom name for the registered client). No hardcoded client names or API keys in code.
 
 Migrations: use a simple migration runner or raw SQL files (e.g. `migrations/001_initial.sql`, `002_vec_tables.sql`) and run them on app start or via a small CLI. Load sqlite-vec and sqlite-rembed before creating vec0 virtual tables.
 
@@ -113,7 +113,7 @@ Migrations: use a simple migration runner or raw SQL files (e.g. `migrations/001
   - **Embed and persist (SQLite-only RAG)**:
     - Insert `rulesets` or `campaign_templates` row; then for each chunk insert into `ruleset_chunks` or `campaign_template_chunks` and get `id`.
     - **Option A (recommended for large docs)**: In Node, call the embedding API in batches (e.g. OpenAI embeddings endpoint), then insert into the corresponding **sqlite-vec** virtual table: `INSERT INTO vec_ruleset_chunks(rowid, ruleset_id, embedding) VALUES (?, ?, ?)` with the chunk id, parent id, and embedding as a blob (same format sqlite-vec expects; use `Float32Array` and pass `.buffer` or equivalent when binding). This avoids N sequential HTTP calls from sqlite-rembed.
-    - **Option B (pure SQLite)**: Use **sqlite-rembed** in SQL: for each chunk run `INSERT INTO vec_ruleset_chunks(rowid, ruleset_id, embedding) SELECT ?, ?, rembed('text-embedding-3-small', ?)` (one HTTP request per chunk; no batch support in rembed yet). Consider a progress indicator or background job for large files.
+    - **Option B (pure SQLite)**: Use **sqlite-rembed** in SQL with the **configured embedding client name** from env (e.g. `rembed(embedding_client_name, ?)`). One HTTP request per chunk; consider a progress indicator or background job for large files.
   - Ensure `user_id` is set from session/context.
 - **Idempotency**: Same file name + user could overwrite or create new version; decide whether to support “replace” or only “create new” and document it.
 
@@ -122,7 +122,7 @@ Migrations: use a simple migration runner or raw SQL files (e.g. `migrations/001
 ## 4. RAG Retrieval (sqlite-vec + sqlite-rembed)
 
 - **At campaign message time**: Given `campaign_id`, load `campaign.ruleset_id` and `campaign.campaign_template_id`. For the **user message** (and optionally last few turns):
-  - **Embed the query** using **sqlite-rembed** in SQL: `SELECT rembed('text-embedding-3-small', ?)` with the query text; bind the returned blob for the next step (one HTTP call per message).
+  - **Embed the query** using **sqlite-rembed** in SQL: `SELECT rembed(?, ?)` with the **configured embedding client name** (from env) and the query text; bind the returned blob for the next step (one HTTP call per message).
   - **Retrieve** with **sqlite-vec** (two separate KNN queries):
     - Rules: `SELECT rowid, distance FROM vec_ruleset_chunks WHERE embedding MATCH ? AND ruleset_id = ? ORDER BY distance LIMIT 5` (bind the query embedding blob and `ruleset_id`). Join to `ruleset_chunks` on `rowid` to get `content` (and optionally `section_label`).
     - Campaign: `SELECT rowid, distance FROM vec_campaign_template_chunks WHERE embedding MATCH ? AND campaign_template_id = ? ORDER BY distance LIMIT 5`; join to `campaign_template_chunks` for `content`.
