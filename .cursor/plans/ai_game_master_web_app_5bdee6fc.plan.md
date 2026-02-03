@@ -61,11 +61,12 @@ flowchart TB
   - React Router: `react-router`, `@react-router/dev`, `@react-router/node` (or `@react-router/vite` per template).
   - UI: `@mui/material`, `@emotion/react`, `@emotion/styled`.
   - Styling: **CSS Modules** only (no Tailwind). Use `*.module.css` next to components.
+  - **Config/validation**: **zod** ([zod.dev](https://zod.dev)) — use as a core dependency to **validate environment variables on app start**. Define a schema (e.g. `envSchema`) for all env vars (required and optional with defaults); parse and validate at server startup and fail fast with clear errors if invalid.
   - Backend/DB: `better-sqlite3` for SQLite; **sqlite-vec** (npm: `sqlite-vec`) and **sqlite-rembed** (load extension from prebuilt binary or [sqlite-dist](https://github.com/asg017/sqlite-dist)).
-  - RAG: **sqlite-vec** for vector storage/KNN; **sqlite-rembed** for embeddings. Embedding **client and model** are configured via environment variables (see §11); at app init, register the rembed client from env (e.g. OpenAI-format URL for LM Studio, or built-in `ollama` for [Ollama](https://ollama.com)).
+  - RAG: **sqlite-vec** for vector storage/KNN; **sqlite-rembed** for embeddings. Embedding **client and model** are configured via environment variables (see §11); at app init, register the rembed client with **OpenAI format only** (`format`, `url`, `key`) from env.
   - LLM: `@langchain/langgraph`, `@langchain/core`, and a single chat model integration that supports **OpenAI-compatible** base URL and model name (e.g. `@langchain/openai` with `configuration.baseURL` and `configuration.model` from env). Use this for the GM so the same code works with [LM Studio](https://lmstudio.ai) (default e.g. `http://localhost:1234/v1`), [Ollama](https://ollama.com) (default `http://localhost:11434/v1`), or hosted OpenAI/Anthropic-compatible APIs.
   - File parsing: `pdf-parse` for PDF; markdown and plain text via `fs`/string handling.
-- **Config**: Ensure `react-router.config.ts` and `vite.config.ts` are set for framework mode. Root layout in `app/root.tsx` with MUI `ThemeProvider` and React Router `Outlet`. **LLM and embedding provider**: read from env on server startup; no hardcoded URLs or model names (see §11).
+- **Config**: Ensure `react-router.config.ts` and `vite.config.ts` are set for framework mode. Root layout in `app/root.tsx` with MUI `ThemeProvider` and React Router `Outlet`. **LLM and embedding provider**: read from env on server startup; **validate env with zod** on app start (see §11); no hardcoded URLs or model names.
 
 ---
 
@@ -97,7 +98,7 @@ flowchart TB
 
 Embedding dimension (e.g. 1536 for `text-embedding-3-small`, or model-specific for Ollama) must match the configured embedding model. Define the dimension in env or a config module (e.g. `EMBEDDING_DIMENSION`) and use it when creating vec0 tables so the same code works with different providers.
 
-**sqlite-rembed**: At app init, register the embedding client from **environment variables** (see §11). Examples: OpenAI-format (for LM Studio or OpenAI) via custom URL; or built-in `ollama` for Ollama (`http://localhost:11434/api/embeddings`). The client name used in `rembed(clientName, ?)` should be the configured model identifier (e.g. `nomic-embed-text` for Ollama, or a custom name for the registered client). No hardcoded client names or API keys in code.
+**sqlite-rembed**: At app init, register the embedding client from **environment variables** (see §11). Always use **OpenAI format**: `rembedClientOptions('format', 'openai', 'url', <EMBEDDING_BASE_URL>, 'key', <EMBEDDING_API_KEY>)`. The client name used in `rembed(clientName, ?)` is the configured model identifier (`EMBEDDING_MODEL`). No hardcoded URLs or API keys in code.
 
 Migrations: use a simple migration runner or raw SQL files (e.g. `migrations/001Initial.sql`, `002VecTables.sql`) and run them on app start or via a small CLI. Load sqlite-vec and sqlite-rembed before creating vec0 virtual tables.
 
@@ -193,7 +194,7 @@ Migrations: use a simple migration runner or raw SQL files (e.g. `migrations/001
 
 | Area      | Files                                                                                                                                                                                                                                                                                                                                                                                                      |
 | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Config    | `server/config/env.ts` or `server/config/llm.ts` and `server/config/embedding.ts` — read `LLM_*` and `EMBEDDING_*` env vars; export base URL, model name, API key, embedding client name, dimension, and rembed registration options. No defaults hardcoded in business logic.                                                                                                                             |
+| Config    | `server/config/env.ts` — zod schema for all env vars; validate on app start; export typed config. Optionally `server/config/llm.ts` and `server/config/embedding.ts` that consume validated env and export base URL, model name, API key, embedding client name, dimension, and rembed registration options. No defaults hardcoded in business logic.                                                      |
 | DB        | `server/db/schema.sql`, `server/db/index.ts` (connection + query helpers, load extensions using config), `server/db/migrations.ts`                                                                                                                                                                                                                                                                         |
 | RAG       | `server/rag/chunk.ts` (section-aware chunking), `server/rag/retrieve.ts` (embed query via rembed + sqlite-vec KNN + join chunk tables; use config for client name). `server/db/vec.ts` (load sqlite-vec + sqlite-rembed, register rembed client from config, create vec0 tables with config dimension, insert/query helpers). Optional: `server/rag/embed.ts` if using Node batch embedding for ingestion. |
 | LangGraph | `server/gm/graph.ts` (state + nodes + compile), `server/gm/nodes/retrieve.ts`, `server/gm/nodes/gm.ts`                                                                                                                                                                                                                                                                                                     |
@@ -206,7 +207,7 @@ Migrations: use a simple migration runner or raw SQL files (e.g. `migrations/001
 
 ## 11. Environment and Secrets (Configurable LLM and Embeddings)
 
-All LLM and embedding behavior MUST be driven by environment variables. No hardcoded API URLs, model names, or provider logic. Defaults should support **local** [LM Studio](https://lmstudio.ai) and [Ollama](https://ollama.com) (OpenAI-compatible endpoints).
+All LLM and embedding behavior MUST be driven by environment variables. No hardcoded API URLs, model names, or provider logic. Defaults should support **local** [LM Studio](https://lmstudio.ai) and [Ollama](https://ollama.com) (OpenAI-compatible endpoints). **Validate all env on app start** using **zod**: define a single env schema (e.g. in `server/config/env.ts`) that parses and validates required/optional vars; call it before opening DB or registering rembed so the process fails fast with clear validation errors if env is missing or invalid.
 
 **Database**
 
@@ -227,19 +228,18 @@ Use a single OpenAI-compatible client (e.g. LangChain `ChatOpenAI` with `baseURL
 Implementation: one config module (e.g. `server/config/llm.ts`) that reads these and returns options for the chat model constructor. Default `LLM_BASE_URL` can be chosen by convention (e.g. prefer LM Studio port 1234 if nothing set) or document both in README and require the user to set one.
 
 **Embeddings (sqlite-rembed)**  
-Register the rembed client at app init from env. Support (1) OpenAI-format endpoint (LM Studio or OpenAI) and (2) Ollama’s built-in rembed client.
+Register the rembed client at app init from env. Always use OpenAI-standard format (no provider branching): register with `rembedClientOptions('format', 'openai', 'url', EMBEDDING_BASE_URL, 'key', EMBEDDING_API_KEY)`.
 
-| Variable              | Purpose                                                     | Default (local)                               | Example (hosted)            |
-| --------------------- | ----------------------------------------------------------- | --------------------------------------------- | --------------------------- | -------- | -------- |
-| `EMBEDDING_PROVIDER`  | One of `ollama`                                             | `openai`                                      | `openai_compatible`         | `ollama` | `openai` |
-| `EMBEDDING_MODEL`     | Model name (rembed client identifier)                       | `nomic-embed-text` (Ollama)                   | `text-embedding-3-small`    |
-| `EMBEDDING_BASE_URL`  | For `openai_compatible` / LM Studio (optional for `ollama`) | `http://localhost:1234/v1` (LM Studio)        | `https://api.openai.com/v1` |
-| `EMBEDDING_API_KEY`   | API key (optional for local)                                | (empty)                                       | `sk-...`                    |
-| `EMBEDDING_DIMENSION` | Vector size for vec0 schema                                 | `768` (Ollama nomic) or `1536` (OpenAI small) | `1536`                      |
+| Variable              | Purpose                                   | Default (local)                          | Example (hosted)            |
+| --------------------- | ----------------------------------------- | ---------------------------------------- | --------------------------- |
+| `EMBEDDING_MODEL`     | Model name (rembed client identifier)     | `text-embedding-embeddinggemma-300m-qat` | `text-embedding-3-small`    |
+| `EMBEDDING_BASE_URL`  | OpenAI-compatible embeddings API base URL | `http://localhost:1234/v1` (LM Studio)   | `https://api.openai.com/v1` |
+| `EMBEDDING_API_KEY`   | API key (optional for local endpoints)    | (empty)                                  | `sk-...`                    |
+| `EMBEDDING_DIMENSION` | Vector size for vec0 schema               | `1536`                                   | `1536`                      |
 
-Implementation: at DB/rembed init, if `EMBEDDING_PROVIDER=ollama` register rembed client with `options = 'ollama'` (and optional custom URL via rembedClientOptions if Ollama is not on 11434). If `openai` or `openai_compatible`, register with format `openai`, `url` from `EMBEDDING_BASE_URL`, and `key` from `EMBEDDING_API_KEY`. Use `EMBEDDING_MODEL` as the client name in `rembed(EMBEDDING_MODEL, ?)`. Create vec0 tables with `float[EMBEDDING_DIMENSION]`.
+Implementation: at DB/rembed init, register the client with `INSERT INTO temp.rembed_clients(name, options) VALUES (EMBEDDING_MODEL, rembedClientOptions('format', 'openai', 'url', EMBEDDING_BASE_URL, 'key', EMBEDDING_API_KEY))`. Use `EMBEDDING_MODEL` as the client name in `rembed(EMBEDDING_MODEL, ?)`. Create vec0 tables with `float[EMBEDDING_DIMENSION]`.
 
-**Documentation**: Provide an `.env.example` with the above variables and short comments. README should describe: (1) running with LM Studio (embedding + chat), (2) running with Ollama (embedding + chat), (3) mixing (e.g. Ollama for embeddings, LM Studio for LLM) by setting the respective env vars. No secrets in repo; use `.env` (gitignored) and document in README.
+**Documentation**: Provide an `.env.example` with the above variables and short comments. README should describe using any OpenAI-compatible embeddings endpoint (LM Studio, OpenAI, or other) via `EMBEDDING_BASE_URL` and `EMBEDDING_API_KEY`. No secrets in repo; use `.env` (gitignored) and document in README.
 
 ---
 
@@ -255,7 +255,7 @@ Implementation: at DB/rembed init, if `EMBEDDING_PROVIDER=ollama` register rembe
 ## Summary
 
 - **Stack**: TypeScript, pnpm, React Router (framework mode), CSS Modules, MUI, LangGraph (TS), **single SQLite** for all data: relational tables + **sqlite-vec** (vectors/KNN) + **sqlite-rembed** (text embeddings).
-- **Schema**: User → Ruleset, World; User → Campaign (with rulesetId, worldId); Campaign → campaignMessages. Chunk text in `rulesetChunks` / `worldChunks`; embeddings in **sqlite-vec** virtual tables (dimension from `EMBEDDING_DIMENSION`). Query embedding via **sqlite-rembed** with client name and provider from env (default: local [Ollama](https://ollama.com) or [LM Studio](https://lmstudio.ai)).
+- **Schema**: User → Ruleset, World; User → Campaign (with rulesetId, worldId); Campaign → campaignMessages. Chunk text in `rulesetChunks` / `worldChunks`; embeddings in **sqlite-vec** virtual tables (dimension from `EMBEDDING_DIMENSION`). Query embedding via **sqlite-rembed** with client name and OpenAI-format url/key from env.
 - **Configurable providers**: LLM and embeddings are fully configurable via env (§11). Defaults target local OpenAI-compatible servers: [LM Studio](https://lmstudio.ai) and [Ollama](https://ollama.com).
 - **Flows**: Upload file → parse → chunk → embed (rembed in SQL or batched in Node) → insert into chunk tables + vec0 tables; Create campaign → select ruleset + world; Send message → embed query (rembed) → sqlite-vec KNN → join chunks → LangGraph (retrieve → gm) → stream response → persist.
 - **Streaming**: One API route for `POST .../messages` that runs the graph with `streamMode: "messages"` and pipes the token stream to the client; front-end appends tokens to the current assistant message in the UI.
