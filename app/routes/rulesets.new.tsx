@@ -1,6 +1,6 @@
-import { Link, redirect, useActionData, useNavigation } from "react-router";
 import { Box, Button, TextField, Typography } from "@mui/material";
 import { Upload } from "lucide-react";
+import { Link, redirect, useActionData, useNavigation } from "react-router";
 import type { Route } from "./+types/rulesets.new";
 
 export async function action({ request }: Route.ActionArgs) {
@@ -42,7 +42,12 @@ export async function action({ request }: Route.ActionArgs) {
   const now = new Date().toISOString();
 
   let fullText = "";
-  const sourceIds: { id: string; filePath: string; originalFileName: string; sortOrder: number }[] = [];
+  const sourceIds: {
+    id: string;
+    filePath: string;
+    originalFileName: string;
+    sortOrder: number;
+  }[] = [];
 
   for (let i = 0; i < documents.length; i++) {
     const file = documents[i]!;
@@ -69,13 +74,13 @@ export async function action({ request }: Route.ActionArgs) {
 
   db.prepare(
     `INSERT INTO "rulesets" ("id", "userId", "name", "description", "coverImagePath", "createdAt", "updatedAt")
-     VALUES (?, ?, ?, ?, ?, ?, ?)`
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
   ).run(rulesetId, userId, name, description, coverImagePath, now, now);
 
   for (const s of sourceIds) {
     db.prepare(
       `INSERT INTO "rulesetSources" ("id", "rulesetId", "filePath", "originalFileName", "sortOrder", "createdAt")
-       VALUES (?, ?, ?, ?, ?, ?)`
+       VALUES (?, ?, ?, ?, ?, ?)`,
     ).run(s.id, rulesetId, s.filePath, s.originalFileName, s.sortOrder, now);
   }
 
@@ -92,36 +97,57 @@ export function meta(): Route.MetaDescriptors {
 export default function RulesetsNew() {
   const actionData = useActionData() as Route.ComponentProps["actionData"];
   const navigation = useNavigation();
-  const error = actionData && typeof actionData === "object" && "error" in actionData ? (actionData as { error: string }).error : null;
+  const error =
+    actionData && typeof actionData === "object" && "error" in actionData
+      ? (actionData as { error: string }).error
+      : null;
   const submitting = navigation.state === "submitting";
 
   return (
     <Box sx={{ p: 3, maxWidth: 500, mx: "auto" }}>
-      <Typography variant="h5" sx={{ mb: 2 }}>New Ruleset</Typography>
+      <Typography variant="h5" sx={{ mb: 2 }}>
+        New Ruleset
+      </Typography>
       <Typography color="text.secondary" sx={{ mb: 2 }}>
-        Upload one or more documents (PDF, Markdown, or plain text). Name and description will be generated.
+        Upload one or more documents (PDF, Markdown, or plain text). Name and
+        description will be generated.
       </Typography>
       <form method="post" encType="multipart/form-data">
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
           <TextField
             type="file"
             name="documents"
-            inputProps={{ accept: ".pdf,.md,.txt", multiple: true, required: true }}
+            slotProps={{
+              htmlInput: {
+                accept: ".pdf,.md,.txt",
+                multiple: true,
+                required: true,
+              },
+            }}
             fullWidth
           />
           <TextField
             type="file"
             name="cover"
             label="Cover image (optional)"
-            inputProps={{ accept: ".jpg,.jpeg,.png,.webp" }}
+            slotProps={{
+              htmlInput: { accept: ".jpg,.jpeg,.png,.webp" },
+            }}
             fullWidth
           />
           {error && <Typography color="error">{error}</Typography>}
           <Box sx={{ display: "flex", gap: 1 }}>
-            <Button type="submit" variant="contained" disabled={submitting} startIcon={<Upload size={18} />}>
+            <Button
+              type="submit"
+              variant="contained"
+              disabled={submitting}
+              startIcon={<Upload size={18} />}
+            >
               {submitting ? "Creating…" : "Create Ruleset"}
             </Button>
-            <Button component={Link} to="/rulesets">Cancel</Button>
+            <Button component={Link} to="/rulesets">
+              Cancel
+            </Button>
           </Box>
         </Box>
       </form>
