@@ -124,11 +124,11 @@ Embedding dimension (e.g. 1536 for `text-embedding-3-small`, or model-specific f
 **Validation and limits:**
 
 - **File types:** Documents: `.pdf`, `.md`, `.txt`. Images: `.jpg`, `.jpeg`, `.png`, `.webp`. Reject others with 400 and a clear error.
-- **File sizes:** Document max e.g. 10–20 MB per file; cover/character image max e.g. 2–5 MB. Reject with 413 or 400 and clear error message.
-- **Filenames:** Sanitize stored filenames (strip path, limit length, avoid control characters); keep original extension and use `uuid_originalFileName.ext` in `uploads/`.
+- **File sizes:** Document max e.g. 100 MB per file; cover/character image max e.g. 2–5 MB. Reject with 413 or 400 and clear error message.
+- **Filenames:** Sanitize stored filenames (strip path, limit length, avoid control characters, append a UUID); keep original extension and use `:uuid_:originalFileName.ext` in `uploads/`.
 - **Env:** All provider URLs and keys validated at startup via zod; fail fast with actionable errors.
 
-- **Upload UX**: Two flows—(1) “Create Ruleset”: upload one or more files (PDF, Markdown, or plain text) to merge into a single `Ruleset`. (2) “Create World”: upload one or more files (PDF, Markdown, or plain text) to merge into a single `World`. Use MUI components and CSS Modules for layout. **Name and short description** are **auto-generated** on the server after parse; show them in the UI once ready (e.g. preview or detail page); optionally allow editing before or after save. Accept document types: `.pdf`, `.md`, `.txt`; accept optional **cover image**: `.jpg`, `.jpeg`, `.png`, `.webp`.
+- **Upload UX**: Two flows—(1) “Create Ruleset”: upload one or more files (PDF, Markdown, or plain text) to create a single `Ruleset`. (2) “Create World”: upload one or more files (PDF, Markdown, or plain text) to create a single `World`. Use MUI components and CSS Modules for layout. **Name and short description** are **auto-generated** on the server after parse; show them in the UI once ready (e.g. preview or detail page); optionally allow editing before or after save. Accept document types: `.pdf`, `.md`, `.txt`; accept optional **cover image**: `.jpg`, `.jpeg`, `.png`, `.webp`.
 - **Server handling**: In a **route action** (e.g. `POST` to a route that handles multipart form data), or a dedicated API route:
   - Validate file types and sizes (documents + optional cover image).
   - **Parse**: PDF via `pdf-parse`; Markdown/plain text as UTF-8 string. Concatenate all uploaded document contents for the entity.
