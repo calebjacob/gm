@@ -1,0 +1,8 @@
+node_modules
+.env
+.react-router
+build
+.pnpm-store
+uploads/
+data/
+.vite

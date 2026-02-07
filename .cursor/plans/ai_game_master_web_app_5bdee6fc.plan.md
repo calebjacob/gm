@@ -1,7 +1,10 @@
 ---
 name: AI Game Master Web App
 overview: Build a full-stack AI Game Master (Dungeon Master) web app with React Router (framework mode), Material UI, CSS Modules, LangGraph (TypeScript), SQLite for relational data, and a RAG pipeline for rules and campaign content. Users upload rules and world files, create campaigns from them, and converse with an AI GM that resolves actions using retrieved context.
-todos: []
+todos:
+  - id: todo-1770433626708-dmytqhyfj
+    content: Start phase 1
+    status: completed
 isProject: false
 ---
 
@@ -47,6 +50,8 @@ flowchart TB
   Loaders --> SQLite
 ```
 
+
+
 - **Frontend**: React Router v7 in framework mode, Material UI, CSS Modules. Routes use loaders for data and actions for mutations; one dedicated API route for streaming GM responses.
 - **Backend**: Same process (React Router server). **Single SQLite database** for all persistence: relational tables (Users, Rulesets, Worlds, Campaigns, messages) and RAG (chunk text + embeddings via **sqlite-vec** and **sqlite-rembed**).
 - **RAG**: Ruleset and World documents are parsed, chunked, embedded with **sqlite-rembed** (or batched in Node for large ingestion), and stored in **sqlite-vec** virtual tables. At message time, the query is embedded with **sqlite-rembed** and similarity search runs in **sqlite-vec**; retrieved chunks are injected into the GM prompt.
@@ -61,6 +66,7 @@ flowchart TB
   - React Router: `react-router`, `@react-router/dev`, `@react-router/node` (or `@react-router/vite` per template).
   - UI: `@mui/material`, `@emotion/react`, `@emotion/styled`.
   - Styling: **CSS Modules** only (no Tailwind). Use `*.module.css` next to components.
+  - Icons: **lucie-react** only (no @mui/icons): [https://lucide.dev/guide/packages/lucide-react](https://lucide.dev/guide/packages/lucide-react)
   - **Config/validation**: **zod** ([zod.dev](https://zod.dev)) — use as a core dependency to **validate environment variables on app start**. Define a schema (e.g. `envSchema`) for all env vars (required and optional with defaults); parse and validate at server startup and fail fast with clear errors if invalid.
   - Backend/DB: `better-sqlite3` for SQLite; **sqlite-vec** (npm: `sqlite-vec`) and **sqlite-rembed** (load extension from prebuilt binary or [sqlite-dist](https://github.com/asg017/sqlite-dist)).
   - RAG: **sqlite-vec** for vector storage/KNN; **sqlite-rembed** for embeddings. Embedding **client and model** are configured via environment variables (see §11); at app init, register the rembed client in **SQL** with **OpenAI format only** using `rembed_client_options()` (see §11) from env.
@@ -76,6 +82,7 @@ flowchart TB
 
 **Relational tables:**
 
+
 | Table                | Purpose                                                                                                                                                                                                                                                                                                                                |
 | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **users**            | `id` (PK, uuid), `email`, `name`, `createdAt`, `updatedAt`. Optional: password hash if you add auth.                                                                                                                                                                                                                                   |
@@ -87,12 +94,15 @@ flowchart TB
 | **characters**       | `id` (PK, uuid), `campaignId` (FK), `name`, `race`, `class` (or `className` if `class` is reserved), `description` (TEXT), `imagePath` (TEXT, optional), `skills` (TEXT/JSON), `statistics` (TEXT/JSON), `items` (TEXT/JSON), `createdAt`, `updatedAt`. A campaign has one or more characters (the party); all controlled by the user. |
 | **campaignMessages** | `id` (PK, uuid), `campaignId` (FK), `role`, `content` (TEXT), `createdAt`, `updatedAt`.                                                                                                                                                                                                                                                |
 
+
 **Chunk tables** (text only; embeddings live in vec0 virtual tables):
+
 
 | Table             | Purpose                                                                                                                                                                                                                  |
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **rulesetChunks** | `id` (PK, integer, used as rowid for vec table), `rulesetId` (FK), `rulesetSourceId` (FK to rulesetSources) — source file this chunk was generated from, `content` (TEXT), `sectionLabel` (TEXT, optional), `createdAt`. |
 | **worldChunks**   | Same shape: `id`, `worldId`, `worldSourceId` (FK to worldSources) — source file this chunk was generated from, `content`, `sectionLabel`, `createdAt`.                                                                   |
+
 
 **sqlite-vec virtual tables** (store embeddings; use same rowid as chunk tables for joins):
 
@@ -115,7 +125,7 @@ Embedding dimension (e.g. 1536 for `text-embedding-3-small`, or model-specific f
 - **Per-file contract**: Each migration file exports a version number (or it is derived from the filename) and an **up** function that receives the DB connection (and optionally the current `user_version`) and performs the schema changes for that version (e.g. raw SQL or a small script). No **down** required for this plan unless added later.
 - **Runner**: A single migration runner (e.g. `server/db/migrate.ts`) that: (1) opens the DB and loads sqlite-vec/sqlite-rembed before any migration that needs them, (2) runs `PRAGMA user_version` to get the current version, (3) **discovers** migration files in `server/db/migrations/` (e.g. glob `*.ts` or `*.js`), (4) parses the version from the filename (or from the exported value), (5) filters to migrations with version > current `user_version`, (6) runs pending migrations **in order** inside a **transaction**, (7) after each successful migration sets `PRAGMA user_version` to that migration’s version. Invoke this runner **on app start** before any other DB access.
 
-**Upload storage (all file uploads):** Use a single root project folder **`uploads/`**. Every saved file is stored as **`uploads/:uuid_:originalFileName`** (e.g. `uploads/f47ac10b-58cc-4372-a567-0e02b2c3d479_manual.pdf` or `uploads/f47ac10b-58cc-4372-a567-0e02b2c3d479_cover.png`). Generate a new UUID per file; keep the client-provided original filename (sanitized if needed). Store the **relative path** (e.g. `uploads/uuid_originalFileName.ext`) in the relevant place: **rulesetSources** or **worldSources** (one row per file, `filePath` + `originalFileName`) for ruleset/world source documents; `coverImagePath` or `imagePath` for cover/character images. Applies to: ruleset/world source documents (many per ruleset/world), ruleset/world/campaign cover images, and character images.
+**Upload storage (all file uploads):** Use a single root project folder `**uploads/**`. Every saved file is stored as `**uploads/:uuid_:originalFileName**` (e.g. `uploads/f47ac10b-58cc-4372-a567-0e02b2c3d479_manual.pdf` or `uploads/f47ac10b-58cc-4372-a567-0e02b2c3d479_cover.png`). Generate a new UUID per file; keep the client-provided original filename (sanitized if needed). Store the **relative path** (e.g. `uploads/uuid_originalFileName.ext`) in the relevant place: **rulesetSources** or **worldSources** (one row per file, `filePath` + `originalFileName`) for ruleset/world source documents; `coverImagePath` or `imagePath` for cover/character images. Applies to: ruleset/world source documents (many per ruleset/world), ruleset/world/campaign cover images, and character images.
 
 ---
 
@@ -127,14 +137,13 @@ Embedding dimension (e.g. 1536 for `text-embedding-3-small`, or model-specific f
 - **File sizes:** Document max e.g. 100 MB per file; cover/character image max e.g. 2–5 MB. Reject with 413 or 400 and clear error message.
 - **Filenames:** Sanitize stored filenames (strip path, limit length, avoid control characters, append a UUID); keep original extension and use `:uuid_:originalFileName.ext` in `uploads/`.
 - **Env:** All provider URLs and keys validated at startup via zod; fail fast with actionable errors.
-
 - **Upload UX**: Two flows—(1) “Create Ruleset”: upload one or more files (PDF, Markdown, or plain text) to create a single `Ruleset`. (2) “Create World”: upload one or more files (PDF, Markdown, or plain text) to create a single `World`. Use MUI components and CSS Modules for layout. **Name and short description** are **auto-generated** on the server after parse; show them in the UI once ready (e.g. preview or detail page); optionally allow editing before or after save. Accept document types: `.pdf`, `.md`, `.txt`; accept optional **cover image**: `.jpg`, `.jpeg`, `.png`, `.webp`.
 - **Server handling**: In a **route action** (e.g. `POST` to a route that handles multipart form data), or a dedicated API route:
   - Validate file types and sizes (documents + optional cover image).
   - **Parse**: PDF via `pdf-parse`; Markdown/plain text as UTF-8 string. Concatenate all uploaded document contents for the entity.
   - **Generate name and description**: From the parsed text (e.g. first 1,000 chars), call the configured LLM with a short prompt asking for a concise **title** (a few words) and a **short description** (1–2 sentences). Use the same OpenAI-compatible client as the GM; keep the prompt small so it's fast. Store results in `name` and `description` on the new row. Fallback: derive a name from the first document's filename or first heading if LLM is unavailable.
-  - **Cover image**: If an image file is provided, validate type and size (e.g. max 2–5 MB), save to **`uploads/:uuid_:originalFileName`** (see upload storage convention). Store the relative path in `coverImagePath`. Optionally resize or re-encode for consistent display.
-  - For each uploaded source document, save to **`uploads/:uuid_:originalFileName`** and insert a row into **rulesetSources** or **worldSources** with `filePath` (relative), `originalFileName`, and optional `sortOrder`; same convention for all uploads.
+  - **Cover image**: If an image file is provided, validate type and size (e.g. max 2–5 MB), save to `**uploads/:uuid_:originalFileName**` (see upload storage convention). Store the relative path in `coverImagePath`. Optionally resize or re-encode for consistent display.
+  - For each uploaded source document, save to `**uploads/:uuid_:originalFileName**` and insert a row into **rulesetSources** or **worldSources** with `filePath` (relative), `originalFileName`, and optional `sortOrder`; same convention for all uploads.
   - **Chunk**: Section-aware chunking (split on `#` headers for Markdown, page number or header for PDFs, or double newlines) with max chars per chunk (e.g. 500–800 tokens) and optional overlap. Store `sectionLabel` per chunk.
   - **Embed and persist (SQLite-only RAG)**:
     - Insert `rulesets` or `worlds` row (with `name`, `description`, `coverImagePath`); then for each chunk insert into `rulesetChunks` or `worldChunks` and get `id`.
@@ -162,7 +171,7 @@ Characters are **playable characters** that make up the **party** for a campaign
 
 - **Character-suggestions**: Retrieve chunks from the campaign's ruleset and world (same RAG as campaign chat); optionally use the LLM to extract or list races, classes, skills, stats, items from retrieved text and return structured options for the form.
 - **Character GM chat**: Reuse the same LangGraph GM with a **character-creation mode** (different system prompt: "Help the player create a character; use the following rules and world context…; when ready, respond with a structured character suggestion"). Or a dedicated subgraph that retrieves rules/world context and prompts the LLM to ask follow-ups and then output a suggested character. Stream responses as in campaign chat; when the assistant message contains a character suggestion, parse it (e.g. JSON in a code block) and update the form state. Persist character-chat messages only in memory or in a separate store for the session if needed; the canonical character is saved on Submit.
-- **Image**: Optional character image upload; save to **`uploads/:uuid_:originalFileName`** and store the relative path in `imagePath` (same convention as all other uploads).
+- **Image**: Optional character image upload; save to `**uploads/:uuid_:originalFileName**` and store the relative path in `imagePath` (same convention as all other uploads).
 
 ---
 
@@ -228,7 +237,7 @@ Characters are **playable characters** that make up the **party** for a campaign
 - **Character summary cards** (left column): Each card displays the character’s **name**, **image** (if present), **race**, **class**, and **important statistics** (e.g. health, initiative) — the exact stats shown depend on the campaign’s selected **Ruleset** (e.g. derive from ruleset chunks or a convention like “health”, “initiative”). Cards are compact summary views. **Two primary interactions**:
   1. **Click to add @-mention**: On card click, insert `@CharacterName` at the **current caret/cursor position** in the chat textarea (or **append** to the end of the current text if the textarea is not focused). This provides a quick way to reference a character without typing `@` and using the autocomplete.
   2. **Click to view details**: On a separate action (e.g. secondary click, or a “details” control on the card), open a **drawer** that shows **full character details** (skills, inventory, statistics, description, etc.). The drawer can be dismissible and does not navigate away from the campaign view.
-- **Character @-mentions** (textarea): When the user types `**@**` in the campaign chat input, show an **autocomplete popover** listing all **characters** belonging to the current campaign (from loader data). On selection, insert the character reference into the text (e.g. `@CharacterName`). The composed message can look like: _"Give `@CharacterName` a health potion"_. Display mentions in the textarea as plain text `@CharacterName` (or with subtle styling). On submit, send the message content as-is; the backend resolves `@CharacterName` to `characterId` and passes that context to the AI.
+- **Character @-mentions** (textarea): When the user types `**@**` in the campaign chat input, show an **autocomplete popover** listing all **characters** belonging to the current campaign (from loader data). On selection, insert the character reference into the text (e.g. `@CharacterName`). The composed message can look like: *"Give `@CharacterName` a health potion"*. Display mentions in the textarea as plain text `@CharacterName` (or with subtle styling). On submit, send the message content as-is; the backend resolves `@CharacterName` to `characterId` and passes that context to the AI.
 - **State**: When user submits: (1) Optimistically append user message to UI, (2) POST to streaming endpoint (body: message content, optionally structured character refs if pre-resolved on client), (3) Create a placeholder assistant message and consume the **SSE** stream from the API (§6): append chunk deltas to the placeholder until the done event, (4) On stream end, treat as final and optionally refetch from server to sync with DB.
 - **Accessibility**: Focus management, aria-labels for input and send button; ensure @-mention popover and character cards (including “add mention” vs “view details”) are keyboard-navigable and announced.
 
@@ -243,6 +252,7 @@ Characters are **playable characters** that make up the **party** for a campaign
 
 ## 10. Key Files to Add (Suggested)
 
+
 | Area       | Files                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Config     | `server/config/env.ts` — zod schema for all env vars; validate on app start; export typed config. Optionally `server/config/llm.ts` and `server/config/embedding.ts` that consume validated env and export base URL, model name, API key, embedding client name, dimension, and rembed registration options. No defaults hardcoded in business logic.                                                                                                                                                                                                                                                               |
@@ -250,10 +260,11 @@ Characters are **playable characters** that make up the **party** for a campaign
 | RAG        | `server/rag/chunk.ts` (section-aware chunking), `server/rag/retrieve.ts` (embed query via rembed + sqlite-vec KNN + join chunk tables; use config for client name). `server/db/vec.ts` (load sqlite-vec + sqlite-rembed, register rembed client from config, create vec0 tables with config dimension, insert/query helpers). Optional: `server/rag/embed.ts` if using Node batch embedding for ingestion.                                                                                                                                                                                                          |
 | LangGraph  | `server/gm/graph.ts` (state + nodes + compile), `server/gm/nodes/retrieve.ts`, `server/gm/nodes/gm.ts`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | API        | `app/routes/api.campaigns.$campaignId.messages.ts` (POST: campaign chat, stream). Optional: `api.campaigns.$campaignId.characters.chat.ts` (POST: character-creation GM chat, stream) and `api.campaigns.$campaignId.character-suggestions.ts` (GET: suggested races, classes, skills, stats, items from RAG) or fold suggestions into character form loader.                                                                                                                                                                                                                                                       |
-| Upload     | `app/routes/rulesets.new.tsx` (action: parse, chunk, embed, save), `app/routes/worlds.new.tsx`. All upload handling uses the project root folder **`uploads/`** and the **`uploads/:uuid_:originalFileName`** convention (shared helper or consistent logic in ruleset/world/character actions).                                                                                                                                                                                                                                                                                                                    |
+| Upload     | `app/routes/rulesets.new.tsx` (action: parse, chunk, embed, save), `app/routes/worlds.new.tsx`. All upload handling uses the project root folder `**uploads/**` and the `**uploads/:uuid_:originalFileName**` convention (shared helper or consistent logic in ruleset/world/character actions).                                                                                                                                                                                                                                                                                                                    |
 | Chat       | `app/routes/campaigns.$id.tsx` (loader: campaign + characters + messages), `app/components/CampaignChat.tsx`, `app/components/MessageList.tsx`. **Left column**: Party character summary cards (vertical list: name, image, race, class, ruleset-dependent stats; click card to insert @-mention at cursor or append; click to open character details drawer). **Drawer**: MUI Drawer for full character details (skills, inventory, statistics). **@-mentions**: input component that detects `@`, shows MUI Autocomplete/Popover with campaign characters, inserts `@CharacterName`; characters list from loader. |
 | Characters | `app/routes/campaigns.$id.characters.new.tsx`, `app/routes/campaigns.$id.characters.$characterId.tsx` (create/edit). `app/components/CharacterForm.tsx` (MUI form with autocomplete/suggestions), `app/components/CharacterCreationChat.tsx` (GM chat thread for character suggestion; on suggested character, update form preview). Optional: `server/gm/characterGraph.ts` or mode in main graph for character-creation GM.                                                                                                                                                                                       |
 | Styles     | `app/components/*.module.css` next to components                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+
 
 ---
 
@@ -263,13 +274,16 @@ All LLM and embedding behavior MUST be driven by environment variables. No hardc
 
 **Database**
 
+
 | Variable                | Purpose                                                             | Example            |
 | ----------------------- | ------------------------------------------------------------------- | ------------------ |
 | `DATABASE_PATH`         | SQLite file path                                                    | `./data/gm.sqlite` |
 | `REMBED_EXTENSION_PATH` | Path to sqlite-rembed extension binary (optional if on system path) | `./ext/rembed0`    |
 
+
 **LLM (chat model for GM)**  
 Use a single OpenAI-compatible client (e.g. LangChain `ChatOpenAI` with `baseURL` and `model`). Read from env:
+
 
 | Variable       | Purpose                                            | Default (local)                                                                | Example (hosted)            |
 | -------------- | -------------------------------------------------- | ------------------------------------------------------------------------------ | --------------------------- |
@@ -277,10 +291,12 @@ Use a single OpenAI-compatible client (e.g. LangChain `ChatOpenAI` with `baseURL
 | `LLM_MODEL`    | Model name                                         | `llama3.2` (Ollama) or whatever is loaded in LM Studio, e.g. `local-model`     | `gpt-4o`                    |
 | `LLM_API_KEY`  | API key (optional for local LM Studio/Ollama)      | (empty)                                                                        | `sk-...`                    |
 
+
 Implementation: one config module (e.g. `server/config/llm.ts`) that reads these and returns options for the chat model constructor. Default `LLM_BASE_URL` can be chosen by convention (e.g. prefer LM Studio port 1234 if nothing set) or document both in README and require the user to set one.
 
 **Embeddings (sqlite-rembed)**  
 Register the rembed client at app init from env. In **SQL**, use the extension’s `rembed_client_options()` function. Always use OpenAI-standard format (no provider branching): register with `rembed_client_options('format', 'openai', 'url', EMBEDDING_BASE_URL, 'key', EMBEDDING_API_KEY)`.
+
 
 | Variable              | Purpose                                   | Default (local)                          | Example (hosted)            |
 | --------------------- | ----------------------------------------- | ---------------------------------------- | --------------------------- |
@@ -288,6 +304,7 @@ Register the rembed client at app init from env. In **SQL**, use the extension�
 | `EMBEDDING_BASE_URL`  | OpenAI-compatible embeddings API base URL | `http://localhost:1234/v1` (LM Studio)   | `https://api.openai.com/v1` |
 | `EMBEDDING_API_KEY`   | API key (optional for local endpoints)    | (empty)                                  | `sk-...`                    |
 | `EMBEDDING_DIMENSION` | Vector size for vec0 schema               | `1536`                                   | `1536`                      |
+
 
 Implementation: at DB/rembed init, register the client with `INSERT INTO temp.rembed_clients(name, options) VALUES (EMBEDDING_MODEL, rembed_client_options('format', 'openai', 'url', EMBEDDING_BASE_URL, 'key', EMBEDDING_API_KEY))`. Use `EMBEDDING_MODEL` as the client name in `rembed(EMBEDDING_MODEL, ?)`. Create vec0 tables with `float[EMBEDDING_DIMENSION]`.
 
@@ -329,3 +346,4 @@ Optional later: tools (dice, lookup), re-ingestion, section labels in UI, AI ima
 - **Configurable providers**: LLM and embeddings are fully configurable via env (§11). Defaults target local OpenAI-compatible servers: [LM Studio](https://lmstudio.ai) and [Ollama](https://ollama.com).
 - **Flows**: Upload file → parse → chunk → embed (rembed in SQL or batched in Node) → insert into chunk tables + vec0 tables; Create campaign → select ruleset + world; Send message → embed query (rembed) → sqlite-vec KNN → join chunks → LangGraph (retrieve → gm) → stream response → persist.
 - **Streaming**: One API route for `POST .../messages` that runs the graph with `streamMode: "messages"` and pipes the token stream to the client via **SSE**; server sends GM token deltas and a final `done` event; front-end appends tokens to the current assistant message until done.
+
