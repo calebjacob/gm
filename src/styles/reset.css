@@ -1,0 +1,55 @@
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+	background-repeat: no-repeat;
+	padding: 0;
+	margin: 0;
+}
+
+html {
+	-webkit-text-size-adjust: none;
+	text-size-adjust: none;
+	line-height: 1.5;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	block-size: 100%;
+}
+
+img,
+iframe,
+audio,
+video,
+canvas {
+	display: block;
+	max-inline-size: 100%;
+	block-size: auto;
+}
+
+button,
+a {
+	all: unset;
+	display: block;
+	color: inherit;
+}
+
+input,
+button,
+textarea,
+select {
+	font: inherit;
+}
+
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+	overflow-wrap: break-word;
+}
+
+:disabled {
+	cursor: not-allowed;
+}

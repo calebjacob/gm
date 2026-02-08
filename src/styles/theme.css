@@ -1,0 +1,52 @@
+@import "@radix-ui/colors/slate.css";
+@import "@radix-ui/colors/slate-dark.css";
+@import "@radix-ui/colors/tomato.css";
+@import "@radix-ui/colors/tomato-dark.css";
+@import "@radix-ui/colors/jade.css";
+@import "@radix-ui/colors/jade-dark.css";
+
+:root {
+	--size-header-height: 3rem;
+	--transition-duration: 0.15s;
+
+	--radius-xs: 0.2rem;
+	--radius-sm: 0.4rem;
+	--radius-md: 0.8rem;
+	--radius-lg: 1.6rem;
+
+	--font-size-xs: 0.7rem;
+	--font-size-sm: 0.875rem;
+	--font-size-md: 1rem;
+	--font-size-lg: 1.25rem;
+	--font-size-xl: 2rem;
+
+	--font-gothic: "Grenze Gotisch", serif;
+	--font-sans: "Montserrat", system-ui, sans-serif;
+
+	--color-action-filled: var(--jade-10);
+	--color-action-filled-hover: var(--jade-11);
+
+	--color-focus-ring: var(--jade-8);
+
+	--color-bg-body: var(--slate-1);
+	--color-bg-primary: var(--slate-2);
+	--color-bg-primary-hover: var(--slate-3);
+	--color-bg-overlay: var(--slate-3);
+	--color-bg-overlay-hover: var(--slate-5);
+
+	--color-border-overlay: var(--slate-6);
+
+	--color-text: var(--slate-12);
+	--color-text-muted: var(--slate-11);
+	--color-text-disabled: var(--slate-10);
+}
+
+html {
+	line-height: 1.5;
+}
+
+body {
+	font-family: var(--font-sans);
+	background-color: var(--color-bg-body);
+	color: var(--color-text);
+}

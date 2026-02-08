@@ -1,0 +1,68 @@
+.menu {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	min-width: 150px;
+	outline: none;
+}
+
+.menuSection {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+}
+
+.menuSectionHeader {
+	font-size: var(--font-size-xs);
+	font-weight: 500;
+	color: var(--color-text-muted);
+}
+
+.menuItem {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	padding: 0.3rem 0.5rem;
+	border-radius: 0.25rem;
+	color: var(--color-text);
+	outline: none;
+	position: relative;
+	cursor: pointer;
+	forced-color-adjust: none;
+	font-size: var(--font-size-sm);
+	-webkit-tap-highlight-color: transparent;
+
+	&[data-open],
+	&[data-pressed],
+	&[data-focused] {
+		background: var(--color-bg-overlay-hover);
+	}
+
+	&[data-disabled] {
+		cursor: not-allowed;
+		color: var(--color-text-disabled);
+	}
+
+	svg {
+		width: 1rem;
+		height: 1rem;
+		color: var(--color-action-filled);
+	}
+}
+
+.menuSelectIcon {
+	width: 1rem;
+	height: 1rem;
+	color: var(--color-text-muted);
+
+	[data-selected] & {
+		color: var(--color-text);
+	}
+}
+
+.menuSeparator {
+	margin: 0;
+	width: 100%;
+	height: 1px;
+	background: var(--color-border-overlay);
+}
