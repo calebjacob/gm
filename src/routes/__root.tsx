@@ -1,9 +1,8 @@
 import { TanStackDevtools } from "@tanstack/react-devtools";
 import { createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
-
+import { ToastRegion } from "@/components/lib/Toast";
 import Header from "../components/Header";
-
 import appCss from "../styles/index.css?url";
 
 export const Route = createRootRoute({
@@ -56,9 +55,12 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 
 				{children}
 
+				<ToastRegion />
+
 				<TanStackDevtools
 					config={{
-						position: "bottom-right",
+						position: "bottom-left",
+						hideUntilHover: true,
 					}}
 					plugins={[
 						{
@@ -67,6 +69,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 						},
 					]}
 				/>
+
 				<Scripts />
 			</body>
 		</html>

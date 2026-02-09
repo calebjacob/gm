@@ -1,9 +1,9 @@
 import { createRouter } from "@tanstack/react-router";
-
-// Import the generated route tree
+import { Section } from "./components/lib/Section";
+import { Stack } from "./components/lib/Stack";
+import { Text } from "./components/lib/Text";
 import { routeTree } from "./routeTree.gen";
 
-// Create a new router instance
 export const getRouter = () => {
 	const router = createRouter({
 		routeTree,
@@ -11,6 +11,22 @@ export const getRouter = () => {
 
 		scrollRestoration: true,
 		defaultPreloadStaleTime: 0,
+
+		defaultNotFoundComponent: () => {
+			return (
+				<Section height="min-viewport">
+					<Stack align="center" justify="center" margin="auto">
+						<Text tag="h1" size="xl" family="gothic" color="muted" weight={300}>
+							404
+						</Text>
+						<Text>
+							You have turned to a blank page, Traveler.{" "}
+							<Text.Link to="/">Go home?</Text.Link>
+						</Text>
+					</Stack>
+				</Section>
+			);
+		},
 	});
 
 	return router;

@@ -1,8 +1,8 @@
 import clsx from "clsx";
 import {
+	OverlayArrow as AriaOverlayArrow,
 	Popover as AriaPopover,
 	type PopoverProps as AriaPopoverProps,
-	OverlayArrow,
 } from "react-aria-components";
 
 import styles from "./Popover.module.css";
@@ -18,7 +18,7 @@ export function Popover({ children, hideArrow, ...props }: PopoverProps) {
 			{() => (
 				<>
 					{!hideArrow && (
-						<OverlayArrow className={styles.arrow}>
+						<AriaOverlayArrow className={styles.arrow}>
 							<svg
 								width={12}
 								height={12}
@@ -27,7 +27,7 @@ export function Popover({ children, hideArrow, ...props }: PopoverProps) {
 							>
 								<path d="M0 0 L6 6 L12 0" />
 							</svg>
-						</OverlayArrow>
+						</AriaOverlayArrow>
 					)}
 					<div className={styles.content}>{children}</div>
 				</>

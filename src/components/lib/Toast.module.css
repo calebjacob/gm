@@ -1,0 +1,92 @@
+.toastRegion {
+	position: fixed;
+	bottom: 1rem;
+	right: 1rem;
+	display: flex;
+	flex-direction: column-reverse;
+	gap: var(--spacing-2);
+	border-radius: var(--radius-lg);
+	outline: none;
+}
+
+.toast {
+	width: min(100vw - 2rem, 400px);
+	display: flex;
+	gap: 1rem;
+	background: var(--color-bg-overlay);
+	padding: 0.75rem 1rem;
+	border-radius: var(--radius-md);
+	outline: none;
+	forced-color-adjust: none;
+	view-transition-class: toast;
+
+	&[data-focus-visible] {
+		outline: 2px solid var(--focus-ring-color);
+		outline-offset: 2px;
+	}
+}
+
+.content {
+	display: flex;
+	flex: 1 1 auto;
+	min-width: 0;
+	gap: 1rem;
+}
+
+.closeButton {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex: 0 0 auto;
+	background: none;
+	border: none;
+	appearance: none;
+	border-radius: var(--radius-sm);
+	height: 1.6rem;
+	width: 1.6rem;
+	color: var(--color-text-muted);
+	padding: 0;
+	outline: none;
+	cursor: pointer;
+	-webkit-tap-highlight-color: transparent;
+
+	&[data-hovered],
+	&[data-pressed] {
+		color: var(--color-text-standard);
+		box-shadow: none;
+	}
+
+	&[data-focus-visible] {
+		outline: 2px solid var(--color-focus-ring);
+		outline-offset: 2px;
+	}
+}
+
+.icon {
+	flex: 0 0 auto;
+	padding-top: 0.2rem;
+}
+
+::view-transition-new(.toast):only-child {
+	animation: slide-in 400ms;
+}
+
+::view-transition-old(.toast):only-child {
+	animation: slide-out 400ms;
+	animation-fill-mode: forwards;
+}
+
+@keyframes slide-out {
+	to {
+		translate: 100% 0;
+		opacity: 0;
+		visibility: hidden;
+	}
+}
+
+@keyframes slide-in {
+	from {
+		translate: 100% 0;
+		opacity: 0;
+	}
+}

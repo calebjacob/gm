@@ -1,8 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
-
+import { toRouteTitle } from "@/utils/route-title";
 import styles from "./index.module.css";
 
-export const Route = createFileRoute("/")({ component: App });
+export const Route = createFileRoute("/")({
+	component: App,
+	head: () => ({
+		meta: [
+			{
+				title: toRouteTitle("Home"),
+			},
+		],
+	}),
+});
 
 function App() {
 	return (

@@ -1,0 +1,19 @@
+.section {
+	display: flex;
+	flex-direction: column;
+	gap: 2rem;
+	padding: 2rem;
+
+	&[data-height="min-viewport"] {
+		min-height: calc(100vh - var(--size-header-height));
+	}
+}
+
+.container {
+	display: flex;
+	flex-direction: column;
+	gap: 2rem;
+	max-width: 1000px;
+	width: 100%;
+	margin: 0 auto;
+}

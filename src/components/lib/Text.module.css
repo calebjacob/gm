@@ -1,0 +1,83 @@
+.text {
+	text-overflow: ellipsis;
+
+	&[data-color="current"] {
+		color: currentColor;
+	}
+	&[data-color="standard"] {
+		color: var(--color-text-standard);
+	}
+	&[data-color="muted"] {
+		color: var(--color-text-muted);
+	}
+	&[data-color="success"] {
+		color: var(--color-success-text);
+	}
+	&[data-color="error"] {
+		color: var(--color-error-text);
+	}
+	&[data-color="warning"] {
+		color: var(--color-warning-text);
+	}
+
+	&[data-size="xs"] {
+		font-size: var(--font-size-xs);
+	}
+	&[data-size="sm"] {
+		font-size: var(--font-size-sm);
+	}
+	&[data-size="md"] {
+		font-size: var(--font-size-md);
+	}
+	&[data-size="lg"] {
+		font-size: var(--font-size-lg);
+	}
+	&[data-size="xl"] {
+		font-size: var(--font-size-xl);
+	}
+	&[data-family="gothic"] {
+		font-family: var(--font-gothic);
+	}
+	&[data-family="sans"] {
+		font-family: var(--font-sans);
+	}
+}
+
+.link {
+	font-weight: 600;
+	text-decoration: none;
+	text-underline-offset: 0.2em;
+	cursor: pointer;
+	display: inline;
+
+	&[data-color="current"] {
+		color: currentColor;
+	}
+	&[data-color="standard"] {
+		color: var(--color-text-standard);
+	}
+	&[data-color="muted"] {
+		color: var(--color-text-muted);
+	}
+	&[data-color="action"] {
+		color: var(--color-action-text);
+	}
+	&[data-color="success"] {
+		color: var(--color-success-text);
+	}
+	&[data-color="error"] {
+		color: var(--color-error-text);
+	}
+	&[data-color="warning"] {
+		color: var(--color-warning-text);
+	}
+
+	&:hover {
+		text-decoration: underline;
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--color-focus-ring);
+		outline-offset: 2px;
+	}
+}

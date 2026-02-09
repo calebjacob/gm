@@ -1,0 +1,28 @@
+.icon {
+	aspect-ratio: 1 / 1;
+
+	svg {
+		color: currentColor;
+		width: 100%;
+		height: 100%;
+	}
+
+	&[data-color="current"] {
+		color: currentColor;
+	}
+	&[data-color="standard"] {
+		color: var(--color-text-standard);
+	}
+	&[data-color="muted"] {
+		color: var(--color-text-muted);
+	}
+	&[data-color="success"] {
+		color: var(--color-success-text);
+	}
+	&[data-color="error"] {
+		color: var(--color-error-text);
+	}
+	&[data-color="warning"] {
+		color: var(--color-warning-text);
+	}
+}

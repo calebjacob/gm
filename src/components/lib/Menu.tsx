@@ -1,3 +1,4 @@
+import { Link, type LinkComponentProps } from "@tanstack/react-router";
 import clsx from "clsx";
 import {
 	CheckCircle2Icon,
@@ -8,30 +9,30 @@ import {
 } from "lucide-react";
 import React, { type DOMAttributes } from "react";
 import {
+	Header as AriaHeader,
 	Menu as AriaMenu,
 	MenuItem as AriaMenuItem,
+	type MenuItemProps as AriaMenuItemProps,
+	type MenuProps as AriaMenuProps,
 	MenuSection as AriaMenuSection,
+	type MenuSectionProps as AriaMenuSectionProps,
 	MenuTrigger as AriaMenuTrigger,
+	type MenuTriggerProps as AriaMenuTriggerProps,
+	Pressable as AriaPressable,
 	SubmenuTrigger as AriaSubmenuTrigger,
-	Header,
-	type MenuItemProps,
-	type MenuProps,
-	type MenuSectionProps,
-	type MenuTriggerProps,
-	Pressable,
-	type SubmenuTriggerProps,
+	type SubmenuTriggerProps as AriaSubmenuTriggerProps,
 } from "react-aria-components";
 import styles from "./Menu.module.css";
 import { Popover } from "./Popover";
 
-export function Menu(props: MenuTriggerProps) {
+export function Menu(props: AriaMenuTriggerProps) {
 	const [trigger, menu] = React.Children.toArray(props.children) as [
 		React.ReactElement<DOMAttributes<HTMLButtonElement>, string>,
 		React.ReactElement,
 	];
 	return (
 		<AriaMenuTrigger {...props}>
-			<Pressable>{trigger}</Pressable>
+			<AriaPressable>{trigger}</AriaPressable>
 			<Popover offset={0}>{menu}</Popover>
 		</AriaMenuTrigger>
 	);
@@ -43,7 +44,7 @@ Menu.Section = Section;
 Menu.SectionHeader = SectionHeader;
 Menu.SubmenuTrigger = SubmenuTrigger;
 
-function Dropdown<T extends object>(props: MenuProps<T>) {
+function Dropdown<T extends object>(props: AriaMenuProps<T>) {
 	return (
 		<AriaMenu {...props} className={clsx(styles.menu, props.className)}>
 			{props.children}
@@ -52,16 +53,29 @@ function Dropdown<T extends object>(props: MenuProps<T>) {
 }
 
 function Item(
-	props: Omit<MenuItemProps, "children"> & { children?: React.ReactNode },
+	props: Omit<AriaMenuItemProps, "children" | "href" | "hrefLang"> & {
+		children?: React.ReactNode;
+		link?: LinkComponentProps;
+	},
 ) {
 	const textValue =
 		props.textValue ||
 		(typeof props.children === "string" ? props.children : undefined);
+
 	return (
 		<AriaMenuItem
 			{...props}
 			textValue={textValue}
+			href={props.link?.to}
 			className={clsx(styles.menuItem, props.className)}
+			render={(domProps) =>
+				"href" in domProps && domProps.href ? (
+					<Link to={props.link?.to} {...domProps} />
+				) : (
+					// @ts-expect-error
+					<div {...domProps} />
+				)
+			}
 		>
 			{({ hasSubmenu, isSelected, selectionMode }) => (
 				<>
@@ -90,7 +104,7 @@ function Item(
 	);
 }
 
-function Section<T extends object>(props: MenuSectionProps<T>) {
+function Section<T extends object>(props: AriaMenuSectionProps<T>) {
 	return (
 		<AriaMenuSection
 			{...props}
@@ -100,10 +114,10 @@ function Section<T extends object>(props: MenuSectionProps<T>) {
 }
 
 function SectionHeader() {
-	return <Header className={styles.menuSectionHeader} />;
+	return <AriaHeader className={styles.menuSectionHeader} />;
 }
 
-function SubmenuTrigger(props: SubmenuTriggerProps) {
+function SubmenuTrigger(props: AriaSubmenuTriggerProps) {
 	const [trigger, menu] = React.Children.toArray(props.children) as [
 		React.ReactElement,
 		React.ReactElement,

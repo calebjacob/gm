@@ -4,6 +4,8 @@
 @import "@radix-ui/colors/tomato-dark.css";
 @import "@radix-ui/colors/jade.css";
 @import "@radix-ui/colors/jade-dark.css";
+@import "@radix-ui/colors/amber.css";
+@import "@radix-ui/colors/amber-dark.css";
 
 :root {
 	--size-header-height: 3rem;
@@ -23,20 +25,38 @@
 	--font-gothic: "Grenze Gotisch", serif;
 	--font-sans: "Montserrat", system-ui, sans-serif;
 
-	--color-action-filled: var(--jade-10);
-	--color-action-filled-hover: var(--jade-11);
+	--color-action-fill: var(--jade-10);
+	--color-action-fill-hover: var(--jade-11);
+	--color-action-text: var(--jade-11);
+	--color-action-text-hover: var(--jade-12);
+
+	--color-success-fill: var(--jade-10);
+	--color-success-fill-hover: var(--jade-11);
+	--color-success-text: var(--jade-11);
+	--color-success-text-hover: var(--jade-12);
+
+	--color-error-fill: var(--tomato-10);
+	--color-error-fill-hover: var(--tomato-11);
+	--color-error-text: var(--tomato-11);
+	--color-error-text-hover: var(--tomato-12);
+
+	--color-warning-fill: var(--amber-11);
+	--color-warning-fill-hover: var(--amber-12);
+	--color-warning-text: var(--amber-11);
+	--color-warning-text-hover: var(--amber-12);
 
 	--color-focus-ring: var(--jade-8);
 
 	--color-bg-body: var(--slate-1);
-	--color-bg-primary: var(--slate-2);
-	--color-bg-primary-hover: var(--slate-3);
+	--color-bg-standard: var(--slate-2);
+	--color-bg-standard-hover: var(--slate-3);
 	--color-bg-overlay: var(--slate-3);
 	--color-bg-overlay-hover: var(--slate-5);
 
+	--color-border-standard: var(--slate-4);
 	--color-border-overlay: var(--slate-6);
 
-	--color-text: var(--slate-12);
+	--color-text-standard: var(--slate-12);
 	--color-text-muted: var(--slate-11);
 	--color-text-disabled: var(--slate-10);
 }
@@ -48,5 +68,5 @@ html {
 body {
 	font-family: var(--font-sans);
 	background-color: var(--color-bg-body);
-	color: var(--color-text);
+	color: var(--color-text-standard);
 }

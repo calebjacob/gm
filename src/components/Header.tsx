@@ -2,11 +2,8 @@ import { Link } from "@tanstack/react-router";
 import {
 	BookOpenTextIcon,
 	ChevronDownIcon,
-	MapIcon,
 	MenuIcon,
 	PencilRulerIcon,
-	SquareLibraryIcon,
-	UserCircleIcon,
 } from "lucide-react";
 import styles from "./Header.module.css";
 import { Menu } from "./lib/Menu";
@@ -25,14 +22,9 @@ export default function Header() {
 
 				<Menu.Dropdown>
 					<Menu.Section>
-						<Menu.Item onAction={() => alert("open")}>
+						<Menu.Item link={{ to: "/modules" }}>
 							<PencilRulerIcon />
-							Rulesets
-						</Menu.Item>
-
-						<Menu.Item onAction={() => alert("open")}>
-							<MapIcon />
-							Worlds
+							Modules
 						</Menu.Item>
 
 						<Menu.Item onAction={() => alert("open")}>
@@ -51,16 +43,6 @@ export default function Header() {
 				</span>
 				<ChevronDownIcon className={styles.dropdownIcon} />
 			</button>
-
-			<div className={styles.right}>
-				<button
-					type="button"
-					className={styles.button}
-					aria-label="User Settings"
-				>
-					<UserCircleIcon className={styles.buttonIcon} />
-				</button>
-			</div>
 		</header>
 	);
 }
