@@ -11,7 +11,7 @@ import { Section } from "@/components/lib/Section";
 import { Stack } from "@/components/lib/Stack";
 import { Text } from "@/components/lib/Text";
 import { toastQueue } from "@/components/lib/Toast";
-import { uploadFileServer } from "@/server/upload-file";
+import { readTextFileServer, uploadFileServer } from "@/server/file";
 import { toRouteTitle } from "@/utils/route-title";
 
 const createModuleServer = createServerFn({
@@ -30,18 +30,7 @@ const createModuleServer = createServerFn({
 	})
 	.handler(async ({ data }) => {
 		const { fileName } = await uploadFileServer(data.file);
-		const arrayBuffer = await data.file.arrayBuffer();
-		const parser = new PDFParse({ data: arrayBuffer, useSystemFonts: true });
-
-		const result = await parser.getText({
-			parsePageInfo: true,
-		});
-
-		console.log(result.pages[0]);
-		console.log(result.pages[1]);
-		console.log(result.pages[2]);
-
-		await parser.destroy();
+		const text = await readTextFileServer(data.file);
 
 		return { success: true, fileName };
 	});
