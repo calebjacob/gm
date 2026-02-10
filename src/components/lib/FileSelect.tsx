@@ -79,8 +79,12 @@ export function FileSelect({
 	};
 
 	return (
-		<AriaDropZone getDropOperation={() => "copy" as const} onDrop={onDrop}>
-			<label className={styles.fileSelect} ref={elementRef}>
+		<AriaDropZone
+			getDropOperation={() => "copy" as const}
+			onDrop={onDrop}
+			className={styles.fileSelect}
+		>
+			<label ref={elementRef}>
 				<VisuallyHidden>
 					<input
 						type="file"
