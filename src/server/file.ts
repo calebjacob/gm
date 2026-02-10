@@ -21,29 +21,59 @@ export const uploadFileServer = createServerOnlyFn(async (file: File) => {
 	return { fileName };
 });
 
-export const readTextFileServer = createServerOnlyFn(async (file: File) => {
-	if (file.type === "application/pdf") {
-		return readPdfFileServer(file);
+type ReadTextFileResult = {
+	pages: {
+		pageNumber: number;
+		chunks: string[];
+	}[];
+};
+
+const splitTextIntoChunks = (text: string, wordsPerChunk: number) => {
+	const words = text.split(/\s+/);
+	const chunks = [];
+	for (let i = 0; i < words.length; i += wordsPerChunk) {
+		chunks.push(words.slice(i, i + wordsPerChunk).join(" "));
 	}
+	return chunks;
+};
 
-	const text = await file.text();
+const wordsPerChunk = 300;
 
-	return text;
-});
+export const readTextFileServer = createServerOnlyFn(
+	async (file: File): Promise<ReadTextFileResult> => {
+		if (file.type === "application/pdf") {
+			return readPdfFileServer(file);
+		}
 
-export const readPdfFileServer = createServerOnlyFn(async (file: File) => {
-	const arrayBuffer = await file.arrayBuffer();
-	const parser = new PDFParse({ data: arrayBuffer, useSystemFonts: true });
+		const text = await file.text();
 
-	const result = await parser.getText({
-		parsePageInfo: true,
-	});
+		return {
+			pages: [
+				{
+					pageNumber: 1,
+					chunks: splitTextIntoChunks(text, wordsPerChunk),
+				},
+			],
+		};
+	},
+);
 
-	console.log(result.pages[0]);
-	console.log(result.pages[1]);
-	console.log(result.pages[2]);
+export const readPdfFileServer = createServerOnlyFn(
+	async (file: File): Promise<ReadTextFileResult> => {
+		const arrayBuffer = await file.arrayBuffer();
+		const parser = new PDFParse({ data: arrayBuffer, useSystemFonts: true });
 
-	await parser.destroy();
+		const result = await parser.getText({
+			parsePageInfo: true,
+		});
 
-	return result;
-});
+		await parser.destroy();
+
+		return {
+			pages: result.pages.map((page) => ({
+				pageNumber: page.num,
+				chunks: splitTextIntoChunks(page.text, wordsPerChunk),
+			})),
+		};
+	},
+);

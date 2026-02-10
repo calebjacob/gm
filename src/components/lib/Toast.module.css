@@ -4,7 +4,7 @@
 	right: 1rem;
 	display: flex;
 	flex-direction: column-reverse;
-	gap: var(--spacing-2);
+	gap: 1rem;
 	border-radius: var(--radius-lg);
 	outline: none;
 }

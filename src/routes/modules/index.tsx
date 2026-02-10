@@ -12,6 +12,7 @@ import { Stack } from "@/components/lib/Stack";
 import { Text } from "@/components/lib/Text";
 import { toastQueue } from "@/components/lib/Toast";
 import { readTextFileServer, uploadFileServer } from "@/server/file";
+import { getChatModel } from "@/server/llm";
 import { toRouteTitle } from "@/utils/route-title";
 
 const createModuleServer = createServerFn({
@@ -30,7 +31,24 @@ const createModuleServer = createServerFn({
 	})
 	.handler(async ({ data }) => {
 		const { fileName } = await uploadFileServer(data.file);
-		const text = await readTextFileServer(data.file);
+		const pages = await readTextFileServer(data.file);
+
+		// TODO: Add each chunk to the database (set up drizzle and sqlite)
+		// TODO: RAG
+
+		// const model = getChatModel();
+		// const response = await model.invoke([
+		// 	{
+		// 		role: "system",
+		// 		content: `You are a helpful assistant that summarizes long documents returning a title, description, and key points.`,
+		// 	},
+		// 	{
+		// 		role: "user",
+		// 		content: text,
+		// 	},
+		// ]);
+		// console.log(response.content);
+		// console.log(response.contentBlocks);
 
 		return { success: true, fileName };
 	});
