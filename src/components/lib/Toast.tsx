@@ -77,7 +77,7 @@ export function ToastRegion() {
 							)}
 						</div>
 
-						<Stack gap={0.5}>
+						<Stack gap={0}>
 							<AriaText slot="title">
 								<Text tag="span" size="sm" weight={600} color="standard">
 									{toast.content.title}

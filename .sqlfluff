@@ -1,0 +1,3 @@
+# https://docs.sqlfluff.com/en/0.6.1/configuration.html#default-configuration
+[sqlfluff:indentation]
+tab_space_size = 2

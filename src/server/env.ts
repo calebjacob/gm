@@ -1,8 +1,9 @@
-import { createServerOnlyFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 const serverEnvSchema = z.object({
 	DATABASE_PATH: z.string(),
+	DEFAULT_USER_EMAIL: z.string(),
+	DEFAULT_USER_NAME: z.string(),
 	DEFAULT_USER_ID: z.string(),
 	EMBEDDING_API_KEY: z.string().optional(),
 	EMBEDDING_BASE_URL: z.string(),
@@ -11,8 +12,7 @@ const serverEnvSchema = z.object({
 	LLM_API_KEY: z.string().optional(),
 	LLM_BASE_URL: z.string(),
 	LLM_MODEL: z.string(),
+	UPLOADS_PATH: z.string(),
 });
 
-export const getServerEnv = createServerOnlyFn(() =>
-	serverEnvSchema.parse(process.env),
-);
+export const serverEnv = serverEnvSchema.parse(process.env);

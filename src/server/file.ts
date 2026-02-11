@@ -2,29 +2,29 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { createServerOnlyFn } from "@tanstack/react-start";
 import { PDFParse } from "pdf-parse";
+import { serverEnv } from "@/server/env";
 
-const UPLOAD_DIR = path.join(process.cwd(), "uploads");
+const UPLOADS_PATH = path.join(process.cwd(), serverEnv.UPLOADS_PATH);
 
 export const uploadFileServer = createServerOnlyFn(async (file: File) => {
 	const arrayBuffer = await file.arrayBuffer();
 	const buffer = Buffer.from(arrayBuffer);
 
 	const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.-_]/g, "");
-	const fileName = `${crypto.randomUUID()}-${sanitizedFileName}`;
+	const filePath = `${crypto.randomUUID()}-${sanitizedFileName}`;
 
-	console.error("!!! Removing upload directory !!!");
-	await fs.rm(UPLOAD_DIR, { recursive: true });
+	console.error("!!! Removing uploads directory !!!");
+	await fs.rm(UPLOADS_PATH, { recursive: true });
+	await fs.mkdir(UPLOADS_PATH, { recursive: true });
+	await fs.writeFile(path.join(UPLOADS_PATH, filePath), buffer);
 
-	await fs.mkdir(UPLOAD_DIR, { recursive: true });
-	await fs.writeFile(path.join(UPLOAD_DIR, fileName), buffer);
-
-	return { fileName };
+	return { filePath };
 });
 
 type ReadTextFileResult = {
-	pages: {
+	chunks: {
 		pageNumber: number;
-		chunks: string[];
+		text: string;
 	}[];
 };
 
@@ -47,13 +47,13 @@ export const readTextFileServer = createServerOnlyFn(
 
 		const text = await file.text();
 
+		const chunks = splitTextIntoChunks(text, wordsPerChunk).map((text) => ({
+			pageNumber: 1,
+			text,
+		}));
+
 		return {
-			pages: [
-				{
-					pageNumber: 1,
-					chunks: splitTextIntoChunks(text, wordsPerChunk),
-				},
-			],
+			chunks,
 		};
 	},
 );
@@ -69,11 +69,15 @@ export const readPdfFileServer = createServerOnlyFn(
 
 		await parser.destroy();
 
-		return {
-			pages: result.pages.map((page) => ({
+		const chunks = result.pages.flatMap((page) =>
+			splitTextIntoChunks(page.text, wordsPerChunk).map((text) => ({
 				pageNumber: page.num,
-				chunks: splitTextIntoChunks(page.text, wordsPerChunk),
+				text,
 			})),
+		);
+
+		return {
+			chunks,
 		};
 	},
 );

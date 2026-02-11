@@ -12,7 +12,10 @@
     "check": "biome check"
   },
   "dependencies": {
+    "@langchain/core": "^1.1.20",
+    "@langchain/langgraph": "^1.1.4",
     "@langchain/openai": "^1.2.6",
+    "@libsql/client": "^0.17.0",
     "@radix-ui/colors": "^3.0.0",
     "@tanstack/react-devtools": "^0.7.0",
     "@tanstack/react-query": "^5.90.20",

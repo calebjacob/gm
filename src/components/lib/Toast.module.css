@@ -12,6 +12,7 @@
 .toast {
 	width: min(100vw - 2rem, 400px);
 	display: flex;
+	align-items: center;
 	gap: 1rem;
 	background: var(--color-bg-overlay);
 	padding: 0.75rem 1rem;
@@ -31,6 +32,7 @@
 	flex: 1 1 auto;
 	min-width: 0;
 	gap: 1rem;
+	align-items: center;
 }
 
 .closeButton {
@@ -64,7 +66,6 @@
 
 .icon {
 	flex: 0 0 auto;
-	padding-top: 0.2rem;
 }
 
 ::view-transition-new(.toast):only-child {
