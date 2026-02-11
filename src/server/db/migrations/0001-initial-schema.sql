@@ -9,9 +9,11 @@ CREATE TABLE "users" (
 CREATE TABLE "modules" (
   "id" TEXT PRIMARY KEY,
   "userId" TEXT NOT NULL REFERENCES "users" ("id"),
+  "category" TEXT NOT NULL,
   "name" TEXT NOT NULL,
   "description" TEXT,
   "coverImagePath" TEXT,
+  "contentFilePath" TEXT NOT NULL,
   "createdAt" TEXT NOT NULL,
   "updatedAt" TEXT NOT NULL
 );

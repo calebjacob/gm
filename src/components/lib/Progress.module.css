@@ -1,0 +1,47 @@
+.progress {
+	height: 0.5rem;
+	position: relative;
+	border-radius: var(--radius-md);
+	background-color: var(--color-bg-overlay);
+	border: 1px solid var(--color-border-overlay);
+	overflow: hidden;
+}
+
+.fill {
+	position: absolute;
+	top: 0;
+	left: 0;
+	height: 100%;
+	border-radius: var(--radius-md);
+	background: var(--color-action-fill);
+	transition: width var(--transition-duration);
+}
+
+.flicker {
+	position: absolute;
+	top: 0;
+	left: -100%;
+	width: 100%;
+	height: 100%;
+	z-index: 10;
+	background: linear-gradient(
+		to right,
+		rgba(255, 255, 255, 0),
+		rgba(255, 255, 255, 1),
+		rgba(255, 255, 255, 0)
+	);
+	mix-blend-mode: overlay;
+
+	.progress[data-working="true"] & {
+		animation: flicker 2s ease-in-out infinite;
+	}
+}
+
+@keyframes flicker {
+	0% {
+		left: -100%;
+	}
+	100% {
+		left: 100%;
+	}
+}

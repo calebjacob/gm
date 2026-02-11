@@ -1,9 +1,9 @@
 CREATE TABLE "moduleChunks" (
   "id" TEXT PRIMARY KEY,
   "moduleId" TEXT NOT NULL REFERENCES "modules" ("id"),
-  "category" TEXT NOT NULL,
   "content" TEXT NOT NULL,
-  "contentFilePath" TEXT NOT NULL,
+  "chunkIndex" INTEGER NOT NULL,
+  "pageNumber" INTEGER NOT NULL,
   "embedding" F32_BLOB(0)
 );
 

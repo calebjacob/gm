@@ -1,21 +1,24 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { createServerFn, useServerFn } from "@tanstack/react-start";
 import { PencilRulerIcon } from "lucide-react";
 import { useState } from "react";
 import { z } from "zod";
+import { Badge } from "@/components/lib/Badge";
+import { Card } from "@/components/lib/Card";
 import { FileSelect } from "@/components/lib/FileSelect";
 import { Icon } from "@/components/lib/Icon";
+import { Progress } from "@/components/lib/Progress";
 import { Row } from "@/components/lib/Row";
 import { Section } from "@/components/lib/Section";
 import { Stack } from "@/components/lib/Stack";
 import { Text } from "@/components/lib/Text";
-import { toastQueue } from "@/components/lib/Toast";
-import { getChatModel, getEmbeddingModel } from "@/server/ai/models";
+import { type ModuleSchema, moduleSchema } from "@/schemas/module";
+import type { ModuleChunkSchema } from "@/schemas/module-chunk";
+import { getEmbeddingModel } from "@/server/ai/models";
 import { getCurrentUserId } from "@/server/auth";
 import { getDb } from "@/server/db";
 import { readTextFileServer, uploadFileServer } from "@/server/file";
 import { handleClientError } from "@/utils/errors";
-import { toModuleChunkCategory } from "@/utils/module-chunks";
 import { toRouteTitle } from "@/utils/route-title";
 
 const createModuleServer = createServerFn({
@@ -32,79 +35,91 @@ const createModuleServer = createServerFn({
 				file: formData.get("file"),
 			});
 	})
-	.handler(async ({ data }) => {
+	.handler(async function* ({ data }) {
 		try {
 			const db = getDb();
 
 			const name = data.file.name.split(".")[0] || "Untitled";
 			const uploaded = await uploadFileServer(data.file);
-			const { chunks } = await readTextFileServer(data.file);
+			const textFile = await readTextFileServer(data.file);
 
-			const moduleId = crypto.randomUUID();
-			const now = new Date().toISOString();
+			const module: ModuleSchema = {
+				id: crypto.randomUUID(),
+				userId: getCurrentUserId(),
+				name,
+				category: "rules",
+				contentFilePath: uploaded.filePath,
+				createdAt: new Date(),
+				updatedAt: new Date(),
+			};
 
 			await db.execute({
 				sql: `
-				INSERT INTO "modules" ("id", "userId", "name", "createdAt", "updatedAt")
-				VALUES ($moduleId, $userId, $name, $createdAt, $updatedAt)
+				INSERT INTO "modules" ("id", "userId", "name", "category", "contentFilePath", "createdAt", "updatedAt")
+				VALUES ($id, $userId, $name, $category, $contentFilePath, $createdAt, $updatedAt)
 			`,
 				args: {
-					moduleId,
-					userId: getCurrentUserId(),
-					name,
-					createdAt: now,
-					updatedAt: now,
+					id: module.id,
+					userId: module.userId,
+					name: module.name,
+					category: module.category,
+					contentFilePath: module.contentFilePath,
+					createdAt: module.createdAt.toISOString(),
+					updatedAt: module.updatedAt.toISOString(),
 				},
 			});
 
+			yield {
+				type: "start" as const,
+				module,
+				totalChunks: textFile.chunks.length,
+			};
+
 			const embeddingModel = getEmbeddingModel();
-			const chatModel = getChatModel();
+			let chunkIndex = -1;
 
-			for (const chunk of chunks) {
-				const embedding = await embeddingModel.embedQuery(chunk.text);
-				const chunkId = crypto.randomUUID();
+			for (const textFileChunk of textFile.chunks) {
+				chunkIndex++;
 
-				const categoryResponse = await chatModel.invoke([
-					{
-						role: "system",
-						content:
-							"You are a game master for a tabletop roleplaying game. You are given a chunk of text and you need to classify it into one of the following categories: 'rules' (eg: game mechanics) or 'world-building' (eg: world history, world geography, lore, general theme, etc.). Only respond with the category 'rules' or 'world-building', no other text.",
-					},
-					{
-						role: "user",
-						content: chunk.text,
-					},
-				]);
-
-				const category = toModuleChunkCategory(
-					categoryResponse.contentBlocks.find((block) => block.type === "text")
-						?.text,
+				const embedding = await embeddingModel.embedQuery(
+					textFileChunk.content,
 				);
 
-				console.log({
-					chunkId,
-					moduleId,
-					content: chunk.text,
-					category,
-					contentFilePath: uploaded.filePath,
-					embedding: JSON.stringify(embedding),
-				});
+				const chunk: ModuleChunkSchema = {
+					id: crypto.randomUUID(),
+					moduleId: module.id,
+					content: textFileChunk.content,
+					chunkIndex,
+					pageNumber: textFileChunk.pageNumber,
+					embedding,
+				};
 
 				await db.execute({
 					sql: `
-					INSERT INTO "moduleChunks" ("id", "moduleId", "content", "category", "contentFilePath", "embedding")
-					VALUES ($chunkId, $moduleId, $content, $category, $contentFilePath, $embedding)
+					INSERT INTO "moduleChunks" ("id", "moduleId", "content", "chunkIndex", "pageNumber", "embedding")
+					VALUES ($id, $moduleId, $content, $chunkIndex, $pageNumber, $embedding)
 				`,
 					args: {
-						chunkId,
-						moduleId,
-						content: chunk.text,
-						category,
-						contentFilePath: uploaded.filePath,
-						embedding: JSON.stringify(embedding),
+						id: chunk.id,
+						moduleId: chunk.moduleId,
+						content: chunk.content,
+						chunkIndex: chunk.chunkIndex,
+						pageNumber: chunk.pageNumber,
+						embedding: JSON.stringify(chunk.embedding),
 					},
 				});
+
+				yield {
+					type: "chunk-completed" as const,
+					module,
+					chunk,
+				};
 			}
+
+			yield {
+				type: "end" as const,
+				module,
+			};
 
 			return { success: true };
 		} catch (error) {
@@ -125,14 +140,16 @@ const getModulesServer = createServerFn({
 		},
 	});
 
-	const moduleChunksQuery = await db.execute({
-		sql: `SELECT * FROM "moduleChunks"`,
-	});
+	const modules = moduleSchema.array().parse(modulesQuery.rows);
 
-	console.dir(modulesQuery.rows, { depth: null });
-	console.dir(moduleChunksQuery.rows, { depth: null });
+	// const moduleChunksQuery = await db.execute({
+	// 	sql: `SELECT * FROM "moduleChunks"`,
+	// });
 
-	return { modules: modulesQuery.toJSON() };
+	// console.dir(modulesQuery.rows, { depth: null });
+	// console.dir(moduleChunksQuery.rows, { depth: null });
+
+	return { modules };
 });
 
 export const Route = createFileRoute("/modules/")({
@@ -148,27 +165,72 @@ export const Route = createFileRoute("/modules/")({
 });
 
 function RouteComponent() {
-	const [processingFiles, setProcessingFiles] = useState<File[]>([]);
+	const router = useRouter();
+	const data = Route.useLoaderData();
+
+	const [processingModules, setProcessingModules] = useState<
+		{
+			file: File;
+			totalChunks?: number;
+			completedChunks?: ModuleChunkSchema[];
+		}[]
+	>([]);
 
 	const createModule = useServerFn(createModuleServer);
 
 	const handleSelectedFiles = async (files: File[]) => {
-		setProcessingFiles((prev) => [...prev, ...files]);
+		setProcessingModules((prev) => [
+			...prev,
+			...files.map((file) => ({ file })),
+		]);
 
 		for (const file of files) {
 			const formData = new FormData();
 			formData.append("file", file);
 
 			try {
-				await createModule({
+				for await (const message of await createModule({
 					data: formData,
-				});
+				})) {
+					console.log(message);
+
+					if (message.type === "start") {
+						setProcessingModules((prev) =>
+							prev.map((m) =>
+								m.file === file
+									? {
+											...m,
+											totalChunks: message.totalChunks,
+										}
+									: m,
+							),
+						);
+					} else if (message.type === "chunk-completed") {
+						setProcessingModules((prev) =>
+							prev.map((m) =>
+								m.file === file
+									? {
+											...m,
+											completedChunks: [
+												...(m.completedChunks || []),
+												message.chunk,
+											],
+										}
+									: m,
+							),
+						);
+					} else if (message.type === "end") {
+						router.invalidate();
+					}
+				}
 			} catch (error) {
 				handleClientError(error, {
 					title: file.name,
 				});
 			} finally {
-				setProcessingFiles((prev) => prev.filter((f) => f !== file));
+				// setProcessingModules((prev) =>
+				// 	prev.filter((module) => module.file !== file),
+				// );
 			}
 		}
 	};
@@ -196,8 +258,44 @@ function RouteComponent() {
 					onSelectFiles={handleSelectedFiles}
 				/>
 
-				{processingFiles.map((file) => (
-					<Text key={file.name}>Processing: {file.name}</Text>
+				{processingModules.map((module) => (
+					<Card key={module.file.name} padding={1} gap={0.5}>
+						<Row align="center" gap={0.5}>
+							<Text size="sm" color="muted">
+								{module.file.name}
+							</Text>
+
+							{module.totalChunks ? (
+								<Badge>
+									Processing chunk: {module.completedChunks?.length || 0} of{" "}
+									{module.totalChunks}
+								</Badge>
+							) : (
+								<Badge>Uploading</Badge>
+							)}
+						</Row>
+
+						<Progress
+							value={module.completedChunks?.length}
+							total={module.totalChunks}
+						/>
+
+						{module.completedChunks?.map((chunk) => (
+							<Card key={chunk.id} padding={1} gap={0.5}>
+								<Text>{chunk.content}</Text>
+							</Card>
+						))}
+					</Card>
+				))}
+
+				{data.modules.map((module) => (
+					<Card key={module.id} padding={1} gap={0.5}>
+						<Text tag="h3" size="md" family="gothic">
+							{module.name}
+						</Text>
+
+						<Badge>{module.category}</Badge>
+					</Card>
 				))}
 			</Section.Container>
 		</Section>

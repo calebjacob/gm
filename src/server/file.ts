@@ -24,7 +24,7 @@ export const uploadFileServer = createServerOnlyFn(async (file: File) => {
 type ReadTextFileResult = {
 	chunks: {
 		pageNumber: number;
-		text: string;
+		content: string;
 	}[];
 };
 
@@ -47,9 +47,9 @@ export const readTextFileServer = createServerOnlyFn(
 
 		const text = await file.text();
 
-		const chunks = splitTextIntoChunks(text, wordsPerChunk).map((text) => ({
+		const chunks = splitTextIntoChunks(text, wordsPerChunk).map((content) => ({
 			pageNumber: 1,
-			text,
+			content,
 		}));
 
 		return {
@@ -61,7 +61,12 @@ export const readTextFileServer = createServerOnlyFn(
 export const readPdfFileServer = createServerOnlyFn(
 	async (file: File): Promise<ReadTextFileResult> => {
 		const arrayBuffer = await file.arrayBuffer();
-		const parser = new PDFParse({ data: arrayBuffer, useSystemFonts: true });
+		const parser = new PDFParse({
+			data: arrayBuffer,
+			// useSystemFonts: true,
+			disableFontFace: true,
+			// fontExtraProperties
+		});
 
 		const result = await parser.getText({
 			parsePageInfo: true,
@@ -70,9 +75,9 @@ export const readPdfFileServer = createServerOnlyFn(
 		await parser.destroy();
 
 		const chunks = result.pages.flatMap((page) =>
-			splitTextIntoChunks(page.text, wordsPerChunk).map((text) => ({
+			splitTextIntoChunks(page.text, wordsPerChunk).map((content) => ({
 				pageNumber: page.num,
-				text,
+				content,
 			})),
 		);
 

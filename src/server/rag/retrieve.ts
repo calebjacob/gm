@@ -1,6 +1,6 @@
 import { createServerOnlyFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { moduleChunkCategorySchema } from "@/utils/module-chunks";
+import { moduleCategorySchema } from "@/schemas/module";
 import { getEmbeddingModel } from "../ai/models";
 import { getDb } from "../db/index";
 
@@ -45,7 +45,7 @@ export const retrieve = createServerOnlyFn(
 				z.object({
 					id: z.string(),
 					content: z.string(),
-					category: moduleChunkCategorySchema,
+					category: moduleCategorySchema,
 					relevance: z.number(),
 				}),
 			)
