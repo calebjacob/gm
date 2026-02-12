@@ -9,3 +9,7 @@ export function formatFileType(mimeType: string) {
 	if (mimeType === "text/plain") return "txt";
 	return subtype;
 }
+
+export function fullPathToUploadedFile(filePath: string) {
+	return `/uploads/${filePath}`;
+}

@@ -1,6 +1,13 @@
 .text {
 	text-overflow: ellipsis;
 
+	&[data-line-clamp] {
+		display: -webkit-box;
+		-webkit-line-clamp: var(--line-clamp, 2);
+		-webkit-box-orient: vertical;
+		overflow: hidden;
+	}
+
 	&[data-color="current"] {
 		color: currentColor;
 	}

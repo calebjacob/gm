@@ -11,4 +11,5 @@ count.txt
 .vinxi
 todos.json
 /uploads
+/public/uploads
 /data

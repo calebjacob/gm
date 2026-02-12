@@ -2,6 +2,7 @@ import {
 	Link as RouterLink,
 	type LinkProps as RouterLinkProps,
 } from "@tanstack/react-router";
+import type { CSSProperties } from "react";
 import styles from "./Text.module.css";
 
 interface TextProps {
@@ -13,6 +14,8 @@ interface TextProps {
 	style?: "normal" | "italic";
 	color?: "current" | "standard" | "muted" | "success" | "error" | "warning";
 	className?: string;
+	whiteSpace?: CSSProperties["whiteSpace"];
+	lineClamp?: number;
 }
 
 export function Text({
@@ -23,6 +26,8 @@ export function Text({
 	weight,
 	style,
 	color,
+	whiteSpace,
+	lineClamp,
 	...props
 }: TextProps) {
 	const Tag = tag;
@@ -33,9 +38,12 @@ export function Text({
 			data-size={size}
 			data-family={family}
 			data-color={color}
+			data-line-clamp={lineClamp ? true : undefined}
 			style={{
 				fontWeight: weight,
 				fontStyle: style,
+				whiteSpace,
+				WebkitLineClamp: lineClamp,
 			}}
 			{...props}
 		>
