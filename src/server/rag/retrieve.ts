@@ -1,14 +1,17 @@
 import { createServerOnlyFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { moduleCategorySchema } from "@/schemas/module";
+import { campaignSchema } from "@/schemas/campaign";
+import { moduleSchema } from "@/schemas/module";
+import { moduleChunkSchema } from "@/schemas/module-chunk";
 import { getEmbeddingModel } from "../ai/models";
+import { getCurrentUserId } from "../auth";
 import { getDb } from "../db/index";
 
 export const retrieve = createServerOnlyFn(
 	async ({
 		query,
 		campaignId,
-		limit = 5,
+		limit = 3,
 	}: {
 		query: string;
 		campaignId: string;
@@ -18,50 +21,85 @@ export const retrieve = createServerOnlyFn(
 		const embeddingModel = getEmbeddingModel();
 		const queryEmbedding = await embeddingModel.embedQuery(query);
 
-		const vectorQuery = await db.execute({
+		const campaignQuery = await db.execute({
 			sql: `
-          WITH vector_scores AS (
-            SELECT DISTINCT
-              "id",
-              "content",
-              "category",
-              1 - vector_distance_cos(embedding, vector32($embedding)) AS "relevance"
-            FROM "moduleChunks"
-            WHERE "moduleId" = $campaignId
-            ORDER BY "relevance" DESC
-            LIMIT $limit
-          )
-          SELECT "id", "content", "category", "relevance" FROM "vector_scores"
-        `,
+				SELECT *
+				FROM "campaigns"
+				WHERE "id" = $campaignId
+					AND "userId" = $userId
+			`,
 			args: {
-				embedding: JSON.stringify(queryEmbedding),
 				campaignId,
-				limit,
+				userId: getCurrentUserId(),
 			},
 		});
 
-		const results = z
+		const campaign = campaignSchema.parse(campaignQuery.rows[0]);
+
+		const modulesQuery = await db.execute({
+			sql: `
+				SELECT *
+				FROM "modules" AS m
+				INNER JOIN "campaignsModules" AS cm ON m."id" = cm."moduleId"
+				WHERE cm."campaignId" = $campaignId
+			`,
+			args: {
+				campaignId,
+			},
+		});
+
+		const modules = moduleSchema.array().parse(modulesQuery.rows);
+
+		const moduleChunksQuery = await db.execute({
+			sql: `
+				WITH vector_scores AS (
+					SELECT
+						"id",
+						"content",
+						"chunkIndex",
+						"pageNumber",
+						"moduleId",
+						1 - vector_distance_cos(embedding, vector32($embedding)) AS "relevance"
+					FROM "moduleChunks"
+					WHERE "moduleId" IN (${modules.map((_, i) => `$moduleId${i}`).join(", ")})
+					ORDER BY "relevance" DESC
+					LIMIT $limit
+				)
+				SELECT "id", "content", "moduleId", "chunkIndex", "pageNumber", "relevance" FROM "vector_scores"
+			`,
+			args: {
+				embedding: JSON.stringify(queryEmbedding),
+				limit,
+				...Object.fromEntries(
+					modules.map((module, i) => [`moduleId${i}`, module.id]),
+				),
+			},
+		});
+
+		const moduleChunks = z
 			.array(
-				z.object({
-					id: z.string(),
-					content: z.string(),
-					category: moduleCategorySchema,
+				moduleChunkSchema.extend({
 					relevance: z.number(),
 				}),
 			)
-			.parse(vectorQuery.rows);
+			.parse(moduleChunksQuery.rows);
 
-		let rulesContext = "";
-		let worldBuildingContext = "";
-
-		for (const result of results) {
-			if (result.category === "rules") {
-				rulesContext += result.content + "\n";
-			} else if (result.category === "world-building") {
-				worldBuildingContext += result.content + "\n";
+		const moduleForChunk = (moduleChunkId: string) => {
+			const module = modules.find((module) => module.id === moduleChunkId);
+			if (!module) {
+				throw new Error(`Module not found for chunk ${moduleChunkId}`);
 			}
-		}
+			return module;
+		};
 
-		return { rulesContext, worldBuildingContext };
+		const result = {
+			campaign,
+			moduleChunks: moduleChunks.map((chunk) => ({
+				...chunk,
+				module: moduleForChunk(chunk.moduleId),
+			})),
+		};
+
+		return result;
 	},
 );

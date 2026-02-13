@@ -24,6 +24,7 @@ CREATE TABLE "campaigns" (
   "id" TEXT PRIMARY KEY,
   "userId" TEXT NOT NULL REFERENCES "users" ("id"),
   "name" TEXT NOT NULL,
+  "description" TEXT,
   "coverImagePath" TEXT,
   "createdAt" TEXT NOT NULL,
   "updatedAt" TEXT NOT NULL

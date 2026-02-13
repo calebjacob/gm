@@ -27,7 +27,7 @@ export default function Header() {
 							Modules
 						</Menu.Item>
 
-						<Menu.Item onAction={() => alert("open")}>
+						<Menu.Item link={{ to: "/campaigns" }}>
 							<BookOpenTextIcon />
 							Campaigns
 						</Menu.Item>

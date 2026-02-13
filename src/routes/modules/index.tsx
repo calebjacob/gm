@@ -13,7 +13,7 @@ import { Section } from "@/components/lib/Section";
 import { Stack } from "@/components/lib/Stack";
 import { Text } from "@/components/lib/Text";
 import { ThumbnailImage } from "@/components/lib/ThumbnailImage";
-import { toastQueue } from "@/components/lib/Toast";
+import { DEFAULT_TOAST_OPTIONS, toastQueue } from "@/components/lib/Toast";
 import { type ModuleSchema, moduleSchema } from "@/schemas/module";
 import {
 	type ModuleChunkSchema,
@@ -129,7 +129,7 @@ const createModuleServer = createServerFn({
 				module,
 			};
 
-			return { success: true };
+			return { module };
 		} catch (error) {
 			console.error(error);
 			throw new Error("Failed to create module");
@@ -144,11 +144,11 @@ const getModulesServer = createServerFn({
 	const modulesQuery = await db.execute({
 		sql: `
 			SELECT
-				m.id,
+				m."id",
 				m."userId",
-				m.category,
-				m.name,
-				m.description,
+				m."category",
+				m."name",
+				m."description",
 				m."coverImagePath",
 				m."contentFilePath",
 				m."createdAt",
@@ -157,15 +157,15 @@ const getModulesServer = createServerFn({
 					(
 						SELECT json_group_array(
 							json_object(
-								'id', mc.id,
+								'id', mc."id",
 								'moduleId', mc."moduleId",
-								'content', mc.content,
+								'content', mc."content",
 								'chunkIndex', mc."chunkIndex",
 								'pageNumber', mc."pageNumber"
 							)
 						)
 						FROM "moduleChunks" mc
-						WHERE mc."moduleId" = m.id
+						WHERE mc."moduleId" = m."id"
 						ORDER BY mc."chunkIndex"
 					),
 					'[]'
@@ -263,11 +263,14 @@ function RouteComponent() {
 					} else if (message.type === "end") {
 						await router.invalidate();
 
-						toastQueue.add({
-							title: "Module created",
-							description: message.module.name,
-							type: "success",
-						});
+						toastQueue.add(
+							{
+								title: "Module created",
+								description: message.module.name,
+								type: "success",
+							},
+							DEFAULT_TOAST_OPTIONS,
+						);
 					}
 				}
 			} catch (error) {
@@ -349,6 +352,10 @@ function RouteComponent() {
 									{module.name}
 								</Text>
 
+								<Text size="sm" color="muted">
+									{module.id}
+								</Text>
+
 								<Row gap={0.5}>
 									<Badge uppercase>{module.category}</Badge>
 									<Badge>{module.moduleChunks.length} Chunks</Badge>
@@ -357,7 +364,7 @@ function RouteComponent() {
 							</Stack>
 						</Row>
 
-						{module.moduleChunks.map((chunk) => (
+						{/* {module.moduleChunks.map((chunk) => (
 							<Card key={chunk.id} padding={1} gap={0.5}>
 								<Text weight={500} size="xs" color="muted">
 									Page {chunk.pageNumber}
@@ -366,7 +373,7 @@ function RouteComponent() {
 									{chunk.content}
 								</Text>
 							</Card>
-						))}
+						))} */}
 					</Card>
 				))}
 			</Section.Container>

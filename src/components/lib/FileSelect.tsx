@@ -98,7 +98,7 @@ export function FileSelect({
 					<UploadIcon />
 				</Icon>
 
-				<Text>Drop files here or click to select files</Text>
+				<Text>Drag & drop or select files</Text>
 
 				<Row align="center" gap={0.5} wrap>
 					{accept.map((type) => (

@@ -21,10 +21,20 @@ export async function retrieveNode(
 		.find((m) => m.type === "human");
 	const query = lastHumanMessage?.text ?? "";
 
-	const { rulesContext, worldBuildingContext } = await retrieve({
+	const { moduleChunks } = await retrieve({
 		query,
 		campaignId: cfg.campaignId,
 	});
+
+	const rulesContext = moduleChunks
+		.filter((chunk) => chunk.module.category === "rules")
+		.map((chunk) => chunk.content)
+		.join("\n");
+
+	const worldBuildingContext = moduleChunks
+		.filter((chunk) => chunk.module.category === "world-building")
+		.map((chunk) => chunk.content)
+		.join("\n");
 
 	return { rulesContext, worldBuildingContext };
 }
