@@ -1,7 +1,7 @@
 import { createServerFn, useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { z } from "zod";
-import { retrieve } from "@/server/rag/retrieve";
+import { findRelevantModuleChunksServer } from "@/server/rag/retrieve";
 import { Card } from "./lib/Card";
 
 const ragQueryServer = createServerFn({
@@ -10,7 +10,7 @@ const ragQueryServer = createServerFn({
 	.inputValidator(z.object({ query: z.string(), campaignId: z.string() }))
 	.handler(async ({ data }) => {
 		try {
-			const result = await retrieve({
+			const result = await findRelevantModuleChunksServer({
 				query: data.query,
 				campaignId: data.campaignId,
 			});

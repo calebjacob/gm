@@ -13,3 +13,5 @@ todos.json
 /uploads
 /public/uploads
 /data
+# LangGraph API
+.langgraph_api

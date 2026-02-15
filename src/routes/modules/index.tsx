@@ -22,7 +22,8 @@ import {
 import { getEmbeddingModel } from "@/server/ai/models";
 import { getCurrentUserId } from "@/server/auth";
 import { getDb } from "@/server/db";
-import { readTextFileServer, uploadFileServer } from "@/server/file";
+import { readTextFileServer } from "@/server/files/read";
+import { uploadFileServer } from "@/server/files/upload";
 import { handleClientError } from "@/utils/errors";
 import { fullPathToUploadedFile } from "@/utils/files";
 import { toRouteTitle } from "@/utils/route-title";

@@ -1,9 +1,9 @@
 import { END, START, StateGraph } from "@langchain/langgraph";
 import { gameMasterNode } from "./game-master-node";
-import { GameMasterState } from "./game-master-state";
 import { retrieveNode } from "./retrieve-node";
+import { GraphState } from "./state";
 
-const graph = new StateGraph(GameMasterState)
+const graph = new StateGraph(GraphState)
 
 	.addNode("retrieve", retrieveNode)
 	.addNode("game-master", gameMasterNode)

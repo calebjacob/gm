@@ -20,7 +20,6 @@ export function getChatModel(): ChatOpenAI {
 
 export function getEmbeddingModel(): OpenAIEmbeddings {
 	if (!embeddingModel) {
-		console.log(serverEnv);
 		embeddingModel = new OpenAIEmbeddings({
 			model: serverEnv.EMBEDDING_MODEL,
 			encodingFormat: "float",

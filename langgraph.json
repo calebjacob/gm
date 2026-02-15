@@ -1,0 +1,7 @@
+{
+  "node_version": "22",
+  "graphs": {
+    "gameMasterGraph": "./src/server/ai/lang-graph/graph.ts:gameMasterGraph"
+  },
+  "env": ".env"
+}

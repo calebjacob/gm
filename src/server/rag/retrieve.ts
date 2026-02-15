@@ -1,22 +1,34 @@
 import { createServerOnlyFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { campaignSchema } from "@/schemas/campaign";
+import { type CampaignSchema, campaignSchema } from "@/schemas/campaign";
 import { moduleSchema } from "@/schemas/module";
 import { moduleChunkSchema } from "@/schemas/module-chunk";
 import { getEmbeddingModel } from "../ai/models";
 import { getCurrentUserId } from "../auth";
 import { getDb } from "../db/index";
 
-export const retrieve = createServerOnlyFn(
+export const relevantModuleChunkSchema = moduleChunkSchema.extend({
+	module: moduleSchema,
+	relevance: z.number(),
+});
+
+export type RelevantModuleChunkSchema = z.infer<
+	typeof relevantModuleChunkSchema
+>;
+
+export const findRelevantModuleChunksServer = createServerOnlyFn(
 	async ({
 		query,
 		campaignId,
-		limit = 3,
+		limit,
 	}: {
 		query: string;
 		campaignId: string;
-		limit?: number;
-	}) => {
+		limit: number;
+	}): Promise<{
+		campaign: CampaignSchema;
+		moduleChunks: RelevantModuleChunkSchema[];
+	}> => {
 		const db = getDb();
 		const embeddingModel = getEmbeddingModel();
 		const queryEmbedding = await embeddingModel.embedQuery(query);
@@ -77,11 +89,7 @@ export const retrieve = createServerOnlyFn(
 		});
 
 		const moduleChunks = z
-			.array(
-				moduleChunkSchema.extend({
-					relevance: z.number(),
-				}),
-			)
+			.array(relevantModuleChunkSchema.omit({ module: true }))
 			.parse(moduleChunksQuery.rows);
 
 		const moduleForChunk = (moduleChunkId: string) => {

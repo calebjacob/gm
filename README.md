@@ -4,11 +4,7 @@ _...official name TBD_
 
 The ultimate game master powered by AI running locally on your computer. Your adventures (data) are yours alone.
 
----
-
-Welcome to your new TanStack app!
-
-# Getting Started
+## Getting Started
 
 To run this application:
 
@@ -17,7 +13,13 @@ pnpm install
 pnpm dev
 ```
 
-# Building For Production
+## LangSmith Studio
+
+```bash
+npx @langchain/langgraph-cli dev
+```
+
+## Building For Production
 
 To build this application for production:
 
@@ -35,7 +37,7 @@ pnpm test
 
 ## Styling
 
-This project uses [Tailwind CSS](https://tailwindcss.com/) for styling.
+This project uses CSS Modules for styling.
 
 ## Linting & Formatting
 
@@ -169,7 +171,7 @@ if (!rootElement.innerHTML) {
   root.render(
     <QueryClientProvider client={queryClient}>
       <RouterProvider router={router} />
-    </QueryClientProvider>
+    </QueryClientProvider>,
   );
 }
 ```
