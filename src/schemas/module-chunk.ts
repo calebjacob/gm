@@ -6,6 +6,8 @@ export const moduleChunkSchema = z.object({
 	content: z.string(),
 	chunkIndex: z.number(),
 	pageNumber: z.number(),
+	offsetStart: z.number(),
+	offsetEnd: z.number(),
 	embedding: z.array(z.number()).optional(),
 });
 

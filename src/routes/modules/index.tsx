@@ -67,11 +67,7 @@ const createModuleServer = createServerFn({
 				VALUES ($id, $userId, $name, $category, $contentFilePath, $coverImagePath, $createdAt, $updatedAt)
 			`,
 				args: {
-					id: module.id,
-					userId: module.userId,
-					name: module.name,
-					category: module.category,
-					contentFilePath: module.contentFilePath,
+					...module,
 					coverImagePath: module.coverImagePath || null,
 					createdAt: module.createdAt.toISOString(),
 					updatedAt: module.updatedAt.toISOString(),
@@ -95,25 +91,20 @@ const createModuleServer = createServerFn({
 				);
 
 				const chunk: ModuleChunkSchema = {
+					...textFileChunk,
 					id: crypto.randomUUID(),
 					moduleId: module.id,
-					content: textFileChunk.content,
 					chunkIndex,
-					pageNumber: textFileChunk.pageNumber,
 					embedding,
 				};
 
 				await db.execute({
 					sql: `
-					INSERT INTO "moduleChunks" ("id", "moduleId", "content", "chunkIndex", "pageNumber", "embedding")
-					VALUES ($id, $moduleId, $content, $chunkIndex, $pageNumber, $embedding)
+					INSERT INTO "moduleChunks" ("id", "moduleId", "content", "chunkIndex", "pageNumber", "offsetStart", "offsetEnd", "embedding")
+					VALUES ($id, $moduleId, $content, $chunkIndex, $pageNumber, $offsetStart, $offsetEnd, $embedding)
 				`,
 					args: {
-						id: chunk.id,
-						moduleId: chunk.moduleId,
-						content: chunk.content,
-						chunkIndex: chunk.chunkIndex,
-						pageNumber: chunk.pageNumber,
+						...chunk,
 						embedding: JSON.stringify(chunk.embedding),
 					},
 				});
@@ -162,7 +153,9 @@ const getModulesServer = createServerFn({
 								'moduleId', mc."moduleId",
 								'content', mc."content",
 								'chunkIndex', mc."chunkIndex",
-								'pageNumber', mc."pageNumber"
+								'pageNumber', mc."pageNumber",
+								'offsetStart', mc."offsetStart",
+								'offsetEnd', mc."offsetEnd"
 							)
 						)
 						FROM "moduleChunks" mc
@@ -365,16 +358,17 @@ function RouteComponent() {
 							</Stack>
 						</Row>
 
-						{/* {module.moduleChunks.map((chunk) => (
+						{module.moduleChunks.map((chunk) => (
 							<Card key={chunk.id} padding={1} gap={0.5}>
 								<Text weight={500} size="xs" color="muted">
-									Page {chunk.pageNumber}
+									Page {chunk.pageNumber}, Chunk Index {chunk.chunkIndex},
+									Offset {chunk.offsetStart} - {chunk.offsetEnd}
 								</Text>
 								<Text whiteSpace="pre-wrap" size="sm">
 									{chunk.content}
 								</Text>
 							</Card>
-						))} */}
+						))}
 					</Card>
 				))}
 			</Section.Container>

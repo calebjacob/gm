@@ -9,6 +9,8 @@ type ReadTextFileResult = {
 	chunks: {
 		content: string;
 		pageNumber: number;
+		offsetStart: number;
+		offsetEnd: number;
 	}[];
 	coverImagePath?: string;
 };
@@ -29,9 +31,9 @@ export const readTextFileServer = createServerOnlyFn(
 				text,
 				wordsPerChunk,
 				overlapWordsPerChunk,
-			}).map((content) => ({
+			}).map((chunk) => ({
+				...chunk,
 				pageNumber: 1,
-				content,
 			}));
 
 			return {
@@ -60,9 +62,9 @@ async function readPdfFile(file: File): Promise<ReadTextFileResult> {
 			text: page.text,
 			wordsPerChunk,
 			overlapWordsPerChunk,
-		}).map((content) => ({
+		}).map((chunk) => ({
+			...chunk,
 			pageNumber: page.num,
-			content,
 		}));
 
 		chunks.push(...pageChunks);

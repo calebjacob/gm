@@ -10,12 +10,13 @@ export const splitTextIntoChunks = ({
 	overlapWordsPerChunk: number;
 }) => {
 	const words = text.split(" ").filter(Boolean);
-	const chunks: string[] = [];
+	const chunks: { content: string; offsetStart: number; offsetEnd: number }[] =
+		[];
 	let i = 0;
 
 	while (i < words.length) {
-		const start = Math.max(i - overlapWordsPerChunk, 0);
-		let end = Math.min(start + wordsPerChunk, words.length);
+		i = Math.max(i - overlapWordsPerChunk, 0);
+		let end = Math.min(i + wordsPerChunk, words.length);
 
 		// Prefer splitting at sentence boundaries to avoid breaking mid-sentence
 		if (end < words.length) {
@@ -31,7 +32,12 @@ export const splitTextIntoChunks = ({
 			}
 		}
 
-		chunks.push(words.slice(i, end).join(" "));
+		chunks.push({
+			content: words.slice(i, end).join(" "),
+			offsetStart: i,
+			offsetEnd: end,
+		});
+
 		i = end;
 	}
 

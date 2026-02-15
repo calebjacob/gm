@@ -1,11 +1,6 @@
-import type { BaseMessage } from "@langchain/core/messages";
 import { AIMessage, SystemMessage } from "@langchain/core/messages";
 import { getChatModel } from "../models";
 import type { GraphStateType } from "./state";
-
-export type GameMasterNodeConfig = {
-	characterReferences?: { characterId: string; name: string }[];
-};
 
 export async function gameMasterNode(
 	state: GraphStateType,

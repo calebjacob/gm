@@ -4,6 +4,8 @@ CREATE TABLE "moduleChunks" (
   "content" TEXT NOT NULL,
   "chunkIndex" INTEGER NOT NULL,
   "pageNumber" INTEGER NOT NULL,
+  "offsetStart" INTEGER NOT NULL,
+  "offsetEnd" INTEGER NOT NULL,
   "embedding" F32_BLOB(0)
 );
 

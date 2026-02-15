@@ -70,6 +70,8 @@ export const findRelevantModuleChunksServer = createServerOnlyFn(
 						"content",
 						"chunkIndex",
 						"pageNumber",
+						"offsetStart",
+						"offsetEnd",
 						"moduleId",
 						1 - vector_distance_cos(embedding, vector32($embedding)) AS "relevance"
 					FROM "moduleChunks"
@@ -77,7 +79,7 @@ export const findRelevantModuleChunksServer = createServerOnlyFn(
 					ORDER BY "relevance" DESC
 					LIMIT $limit
 				)
-				SELECT "id", "content", "moduleId", "chunkIndex", "pageNumber", "relevance" FROM "vector_scores"
+				SELECT "id", "content", "moduleId", "chunkIndex", "pageNumber", "offsetStart", "offsetEnd", "relevance" FROM "vector_scores"
 			`,
 			args: {
 				embedding: JSON.stringify(queryEmbedding),
