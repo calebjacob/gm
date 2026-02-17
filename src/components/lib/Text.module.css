@@ -48,6 +48,9 @@
 	&[data-family="sans"] {
 		font-family: var(--font-sans);
 	}
+	&[data-family="serif"] {
+		font-family: var(--font-serif);
+	}
 }
 
 .link {

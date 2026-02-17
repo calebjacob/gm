@@ -33,7 +33,7 @@ export function Menu(props: AriaMenuTriggerProps) {
 	return (
 		<AriaMenuTrigger {...props}>
 			<AriaPressable>{trigger}</AriaPressable>
-			<Popover offset={0}>{menu}</Popover>
+			<Popover>{menu}</Popover>
 		</AriaMenuTrigger>
 	);
 }

@@ -1,9 +1,11 @@
-@import "@radix-ui/colors/slate.css";
-@import "@radix-ui/colors/slate-dark.css";
+@import "@radix-ui/colors/sage.css";
+@import "@radix-ui/colors/sage-dark.css";
+@import "@radix-ui/colors/gold.css";
+@import "@radix-ui/colors/gold-dark.css";
 @import "@radix-ui/colors/tomato.css";
 @import "@radix-ui/colors/tomato-dark.css";
-@import "@radix-ui/colors/jade.css";
-@import "@radix-ui/colors/jade-dark.css";
+@import "@radix-ui/colors/green.css";
+@import "@radix-ui/colors/green-dark.css";
 @import "@radix-ui/colors/amber.css";
 @import "@radix-ui/colors/amber-dark.css";
 
@@ -22,43 +24,52 @@
 	--font-size-lg: 1.25rem;
 	--font-size-xl: 2rem;
 
-	--font-gothic: "Grenze Gotisch", serif;
+	--font-gothic: "Texturina", serif;
 	--font-sans: "Montserrat", system-ui, sans-serif;
+	--font-serif: "EB Garamond", serif;
 
-	--color-action-fill: var(--jade-10);
-	--color-action-fill-hover: var(--jade-11);
-	--color-action-text: var(--jade-11);
-	--color-action-text-hover: var(--jade-12);
+	--color-action-fill: var(--gold-10);
+	--color-action-fill-hover: var(--gold-11);
+	--color-action-fill-light: var(--gold-3);
+	--color-action-fill-light-hover: var(--gold-4);
+	--color-action-text: var(--gold-11);
+	--color-action-text-hover: var(--gold-12);
 
-	--color-success-fill: var(--jade-10);
-	--color-success-fill-hover: var(--jade-11);
-	--color-success-text: var(--jade-11);
-	--color-success-text-hover: var(--jade-12);
+	--color-success-fill: var(--green-10);
+	--color-success-fill-hover: var(--green-11);
+	--color-success-fill-light: var(--green-3);
+	--color-success-fill-light-hover: var(--green-4);
+	--color-success-text: var(--green-11);
+	--color-success-text-hover: var(--green-12);
 
 	--color-error-fill: var(--tomato-10);
 	--color-error-fill-hover: var(--tomato-11);
+	--color-error-fill-light: var(--tomato-3);
+	--color-error-fill-light-hover: var(--tomato-4);
 	--color-error-text: var(--tomato-11);
 	--color-error-text-hover: var(--tomato-12);
 
 	--color-warning-fill: var(--amber-11);
 	--color-warning-fill-hover: var(--amber-12);
+	--color-warning-fill-light: var(--amber-3);
+	--color-warning-fill-light-hover: var(--amber-4);
 	--color-warning-text: var(--amber-11);
 	--color-warning-text-hover: var(--amber-12);
 
-	--color-focus-ring: var(--jade-8);
+	--color-focus-ring: var(--gold-8);
 
-	--color-bg-body: var(--slate-1);
-	--color-bg-standard: var(--slate-2);
-	--color-bg-standard-hover: var(--slate-3);
-	--color-bg-overlay: var(--slate-3);
-	--color-bg-overlay-hover: var(--slate-5);
+	--color-bg-body: var(--sage-1);
+	--color-bg-standard: var(--sage-2);
+	--color-bg-standard-hover: var(--sage-3);
+	--color-bg-overlay: var(--sage-3);
+	--color-bg-overlay-hover: var(--sage-5);
 
-	--color-border-standard: var(--slate-4);
-	--color-border-overlay: var(--slate-6);
+	--color-border-standard: var(--sage-4);
+	--color-border-overlay: var(--sage-6);
 
-	--color-text-standard: var(--slate-12);
-	--color-text-muted: var(--slate-11);
-	--color-text-disabled: var(--slate-10);
+	--color-text-standard: var(--sage-12);
+	--color-text-muted: var(--sage-11);
+	--color-text-disabled: var(--sage-10);
 }
 
 html {

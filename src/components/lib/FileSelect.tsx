@@ -94,11 +94,13 @@ export function FileSelect({
 					/>
 				</VisuallyHidden>
 
-				<Icon size={1.5} color="muted">
-					<UploadIcon />
-				</Icon>
+				<Row align="center" gap={0.5}>
+					<Icon size={1} color="muted">
+						<UploadIcon />
+					</Icon>
 
-				<Text>Drag & drop or select files</Text>
+					<Text>Drag & drop or select files</Text>
+				</Row>
 
 				<Row align="center" gap={0.5} wrap>
 					{accept.map((type) => (

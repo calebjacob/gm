@@ -9,7 +9,7 @@ interface TextProps {
 	children: React.ReactNode;
 	size?: "xs" | "sm" | "md" | "lg" | "xl";
 	tag?: "p" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "span";
-	family?: "gothic" | "sans";
+	family?: "gothic" | "sans" | "serif";
 	weight?: 100 | 200 | 300 | 400 | 500 | 600 | 700 | 800 | 900;
 	style?: "normal" | "italic";
 	color?: "current" | "standard" | "muted" | "success" | "error" | "warning";

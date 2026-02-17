@@ -2,17 +2,19 @@ import { Link } from "@tanstack/react-router";
 import {
 	BookOpenTextIcon,
 	ChevronDownIcon,
+	HelpCircleIcon,
 	MenuIcon,
 	PencilRulerIcon,
 } from "lucide-react";
 import styles from "./Header.module.css";
+import { Icon } from "./lib/Icon";
 import { Menu } from "./lib/Menu";
 
 export default function Header() {
 	return (
 		<header className={styles.header}>
 			<Link to="/" className={styles.logo}>
-				G.M.
+				GM
 			</Link>
 
 			<Menu>
@@ -22,14 +24,25 @@ export default function Header() {
 
 				<Menu.Dropdown>
 					<Menu.Section>
+						<Menu.Item link={{ to: "/campaigns" }}>
+							<Icon>
+								<BookOpenTextIcon />
+							</Icon>
+							Campaigns
+						</Menu.Item>
+
 						<Menu.Item link={{ to: "/modules" }}>
-							<PencilRulerIcon />
+							<Icon>
+								<PencilRulerIcon />
+							</Icon>
 							Modules
 						</Menu.Item>
 
-						<Menu.Item link={{ to: "/campaigns" }}>
-							<BookOpenTextIcon />
-							Campaigns
+						<Menu.Item link={{ to: "/" }}>
+							<Icon>
+								<HelpCircleIcon />
+							</Icon>
+							Help
 						</Menu.Item>
 					</Menu.Section>
 				</Menu.Dropdown>

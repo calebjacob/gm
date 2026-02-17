@@ -10,7 +10,7 @@ export function handleClientError(
 		error instanceof Error ? error.message : "An unknown error occurred";
 
 	toastQueue.add({
-		title: options.title || "Oops!",
+		title: options.title || "Error",
 		description: message,
 		type: "error",
 	});

@@ -1,4 +1,4 @@
-const SENTENCE_ENDINGS = /[.!?]$/;
+// const SENTENCE_ENDINGS = /[.!?]$/;
 
 export const splitTextIntoChunks = ({
 	text,
@@ -16,21 +16,21 @@ export const splitTextIntoChunks = ({
 
 	while (i < words.length) {
 		i = Math.max(i - overlapWordsPerChunk, 0);
-		let end = Math.min(i + wordsPerChunk, words.length);
+		const end = Math.min(i + wordsPerChunk, words.length);
 
-		// Prefer splitting at sentence boundaries to avoid breaking mid-sentence
-		if (end < words.length) {
-			let lastSentenceEnd = -1;
-			for (let j = end - 1; j >= i; j--) {
-				if (SENTENCE_ENDINGS.test(words[j])) {
-					lastSentenceEnd = j;
-					break;
-				}
-			}
-			if (lastSentenceEnd >= i) {
-				end = lastSentenceEnd + 1;
-			}
-		}
+		// // Prefer splitting at sentence boundaries to avoid breaking mid-sentence
+		// if (end < words.length) {
+		// 	let lastSentenceEnd = -1;
+		// 	for (let j = end - 1; j >= i; j--) {
+		// 		if (SENTENCE_ENDINGS.test(words[j])) {
+		// 			lastSentenceEnd = j;
+		// 			break;
+		// 		}
+		// 	}
+		// 	if (lastSentenceEnd >= i) {
+		// 		end = lastSentenceEnd + 1;
+		// 	}
+		// }
 
 		chunks.push({
 			content: words.slice(i, end).join(" "),

@@ -1,3 +1,7 @@
 # https://docs.sqlfluff.com/en/0.6.1/configuration.html#default-configuration
+
+[sqlfluff]
+max_line_length = 100
+
 [sqlfluff:indentation]
 tab_space_size = 2

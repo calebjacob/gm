@@ -1,22 +1,9 @@
 import { z } from "zod";
 import { isoDateTime } from "./date-time";
 
-export const moduleCategorySchema = z.enum(["rules", "world-building"]);
-export type ModuleCategorySchema = z.infer<typeof moduleCategorySchema>;
-
-export function toModuleCategory(
-	category: string | undefined | null,
-): ModuleCategorySchema {
-	if (category === "world-building") {
-		return "world-building";
-	}
-	return "rules";
-}
-
 export const moduleSchema = z.object({
 	id: z.string(),
 	userId: z.string(),
-	category: moduleCategorySchema,
 	name: z.string(),
 	description: z.string().nullish(),
 	coverImagePath: z.string().nullish(),
@@ -26,3 +13,11 @@ export const moduleSchema = z.object({
 });
 
 export type ModuleSchema = z.infer<typeof moduleSchema>;
+
+export const campaignsModulesSchema = z.object({
+	id: z.string(),
+	campaignId: z.string(),
+	moduleId: z.string(),
+});
+
+export type CampaignsModulesSchema = z.infer<typeof campaignsModulesSchema>;

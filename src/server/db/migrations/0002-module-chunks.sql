@@ -1,6 +1,7 @@
 CREATE TABLE "moduleChunks" (
   "id" TEXT PRIMARY KEY,
-  "moduleId" TEXT NOT NULL REFERENCES "modules" ("id"),
+  "moduleId" TEXT NOT NULL,
+  FOREIGN KEY ("moduleId") REFERENCES "modules" ("id") ON DELETE CASCADE,
   "content" TEXT NOT NULL,
   "chunkIndex" INTEGER NOT NULL,
   "pageNumber" INTEGER NOT NULL,

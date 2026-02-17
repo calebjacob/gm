@@ -6,7 +6,7 @@ import { Text } from "@/components/lib/Text";
 import { QueryTest } from "@/components/QueryTest";
 import { campaignSchema } from "@/schemas/campaign";
 import { getCurrentUserId } from "@/server/auth";
-import { getDb } from "@/server/db";
+import { db } from "@/server/db";
 
 export const Route = createFileRoute("/campaigns/$id")({
 	component: RouteComponent,
@@ -22,8 +22,6 @@ const getCampaignServer = createServerFn({
 		}),
 	)
 	.handler(async ({ data }) => {
-		const db = getDb();
-
 		const campaignQuery = await db.execute({
 			sql: "SELECT * FROM campaigns WHERE id = $id AND userId = $userId",
 			args: { id: data.id, userId: getCurrentUserId() },

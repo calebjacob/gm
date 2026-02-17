@@ -12,9 +12,20 @@ export interface PopoverProps extends Omit<AriaPopoverProps, "children"> {
 	hideArrow?: boolean;
 }
 
-export function Popover({ children, hideArrow, ...props }: PopoverProps) {
+export function Popover({
+	children,
+	hideArrow,
+	arrowBoundaryOffset = 5,
+	placement = "bottom",
+	...props
+}: PopoverProps) {
 	return (
-		<AriaPopover {...props} className={clsx(styles.popover, props.className)}>
+		<AriaPopover
+			{...props}
+			arrowBoundaryOffset={arrowBoundaryOffset}
+			placement={placement}
+			className={clsx(styles.popover, props.className)}
+		>
 			{() => (
 				<>
 					{!hideArrow && (

@@ -3,7 +3,14 @@ import styles from "./Icon.module.css";
 interface IconProps {
 	children: React.ReactNode;
 	size?: number;
-	color?: "current" | "standard" | "muted" | "success" | "error" | "warning";
+	color?:
+		| "current"
+		| "standard"
+		| "muted"
+		| "success"
+		| "error"
+		| "warning"
+		| "action";
 }
 
 export function Icon({ children, size = 1, color = "standard" }: IconProps) {

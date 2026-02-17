@@ -1,30 +1,25 @@
-import fs from "node:fs/promises";
+import fs from "node:fs";
 import path from "node:path";
 import type { Client } from "@libsql/client";
+import { createServerOnlyFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { serverEnv } from "../env";
 
-export async function runMigrations(db: Client): Promise<void> {
+export const migrateDatabaseServer = createServerOnlyFn(async (db: Client) => {
 	const rowQuery = await db.execute("PRAGMA user_version");
 	const currentVersion = z.number().parse(rowQuery.rows[0][0]);
 
-	const files = fs.glob(
+	const files = fs.globSync(
 		path.join(process.cwd(), "src/server/db/migrations/*.sql"),
 	);
 
-	while (true) {
-		let sqlFilePath: string | undefined;
-
+	for (const sqlFilePath of files) {
 		try {
-			const { value, done } = await files.next();
-			sqlFilePath = value;
-			if (done || !sqlFilePath) break;
-
 			const migrationName = path.basename(sqlFilePath);
 			const migrationVersion = Math.ceil(Number(migrationName.split("-")[0]));
 			if (migrationVersion <= currentVersion) continue;
 
-			const sql = await fs.readFile(sqlFilePath, "utf8");
+			const sql = fs.readFileSync(sqlFilePath, "utf8");
 
 			const sqlWithInjectedConfig = sql.replace(
 				`"embedding" F32_BLOB(0)`,
@@ -41,4 +36,4 @@ export async function runMigrations(db: Client): Promise<void> {
 			throw error;
 		}
 	}
-}
+});

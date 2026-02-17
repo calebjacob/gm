@@ -1,6 +1,8 @@
 import { TanStackDevtools } from "@tanstack/react-devtools";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
+import { useState } from "react";
 import { ToastRegion } from "@/components/lib/Toast";
 import Header from "../components/Header";
 import appCss from "../styles/index.css?url";
@@ -31,7 +33,7 @@ export const Route = createRootRoute({
 			},
 			{
 				rel: "stylesheet",
-				href: "https://fonts.googleapis.com/css2?family=Grenze+Gotisch:wght@100..900&family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap",
+				href: "https://fonts.googleapis.com/css2?family=Texturina:wght@100..900&family=EB+Garamond:ital,wght@0,400..800&family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap",
 			},
 			{
 				rel: "stylesheet",
@@ -44,6 +46,7 @@ export const Route = createRootRoute({
 });
 
 function RootDocument({ children }: { children: React.ReactNode }) {
+	const [queryClient] = useState(() => new QueryClient());
 	return (
 		<html lang="en" className="dark">
 			<head>
@@ -51,11 +54,11 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 			</head>
 
 			<body>
-				<Header />
-
-				{children}
-
-				<ToastRegion />
+				<QueryClientProvider client={queryClient}>
+					<Header />
+					{children}
+					<ToastRegion />
+				</QueryClientProvider>
 
 				<TanStackDevtools
 					config={{

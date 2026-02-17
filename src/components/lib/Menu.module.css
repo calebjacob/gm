@@ -23,7 +23,7 @@
 	align-items: center;
 	gap: 0.75rem;
 	padding: 0.3rem 0.5rem;
-	border-radius: 0.25rem;
+	border-radius: var(--radius-xs);
 	color: var(--color-text-standard);
 	outline: none;
 	position: relative;
@@ -41,12 +41,6 @@
 	&[data-disabled] {
 		cursor: not-allowed;
 		color: var(--color-text-disabled);
-	}
-
-	svg {
-		width: 1rem;
-		height: 1rem;
-		color: var(--color-action-fill);
 	}
 }
 
