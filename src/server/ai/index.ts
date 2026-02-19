@@ -1,7 +1,9 @@
 import {
 	type ContentListUnion,
 	type CreateChatParameters,
+	type GenerateContentResponse,
 	GoogleGenAI,
+	type Tool,
 } from "@google/genai";
 import { createServerOnlyFn } from "@tanstack/react-start";
 import type { ZodArray, ZodObject, z } from "zod";
@@ -11,16 +13,16 @@ import { serverEnv } from "@/server/env";
 // https://ai.google.dev/gemini-api/docs/structured-output
 
 export const ai = new GoogleGenAI({
-	apiKey: serverEnv.EMBEDDING_API_KEY,
+	apiKey: serverEnv.GOOGLE_AI_API_KEY,
 });
 
 export const embedContentServer = createServerOnlyFn(
 	async (content: string) => {
 		const result = await ai.models.embedContent({
-			model: serverEnv.EMBEDDING_MODEL,
+			model: serverEnv.GOOGLE_EMBEDDING_MODEL,
 			contents: [content],
 			config: {
-				outputDimensionality: Number(serverEnv.EMBEDDING_DIMENSION),
+				outputDimensionality: serverEnv.GOOGLE_EMBEDDING_DIMENSION,
 				taskType: "SEMANTIC_SIMILARITY",
 			},
 		});
@@ -35,32 +37,39 @@ export const embedContentServer = createServerOnlyFn(
 
 export const generateStructuredContentServer = createServerOnlyFn(
 	async <TSchema extends ZodObject | ZodArray>({
-		content,
+		contents,
 		schema,
 		systemInstruction,
+		tools,
 	}: {
-		content: ContentListUnion;
+		contents: ContentListUnion;
 		schema: TSchema;
 		systemInstruction: string;
-	}): Promise<{ data: z.infer<TSchema> }> => {
-		const result = await ai.models.generateContent({
-			model: serverEnv.LLM_MODEL,
-			contents: content,
+		tools?: Tool[];
+	}): Promise<{
+		data: z.infer<TSchema>;
+		response: GenerateContentResponse;
+	}> => {
+		const response = await ai.models.generateContent({
+			model: serverEnv.GOOGLE_LLM_MODEL,
+			contents: contents,
 			config: {
 				responseMimeType: "application/json",
 				responseSchema: schema.toJSONSchema(),
 				systemInstruction,
+				tools,
 			},
 		});
 
-		console.log("Generate structured content result:", result);
+		console.log("Generate structured content result:", response);
 
 		const data = schema.parse(
-			JSON.parse(result.text ?? ""),
+			JSON.parse(response.text ?? ""),
 		) as z.infer<TSchema>;
 
 		return {
 			data,
+			response,
 		};
 	},
 );
@@ -81,7 +90,7 @@ export const createChatServer = createServerOnlyFn(
 		systemInstruction: string;
 	}) => {
 		const chat = ai.chats.create({
-			model: serverEnv.LLM_MODEL,
+			model: serverEnv.GOOGLE_LLM_MODEL,
 			history: history,
 			config: {
 				systemInstruction,

@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { z } from "zod";
+import { GeminiTest } from "@/components/GeminiTest";
 import { Button } from "@/components/lib/Button";
 import { Card } from "@/components/lib/Card";
 import { Icon } from "@/components/lib/Icon";
@@ -219,13 +220,13 @@ export const Route = createFileRoute("/campaigns/new")({
 function RouteComponent() {
 	const router = useRouter();
 	const data = Route.useLoaderData();
-	const updateCampaignRpc = useServerFn(updateCampaignServer);
-	const removeCampaignRpc = useServerFn(removeCampaignServer);
+	const updateCampaignClient = useServerFn(updateCampaignServer);
+	const removeCampaignClient = useServerFn(removeCampaignServer);
 	const [moduleIds, setModuleIds] = useState<string[]>([]);
 
 	const removeCampaign = async () => {
 		try {
-			await removeCampaignRpc({ data: { campaignId: data.campaign.id } });
+			await removeCampaignClient({ data: { campaignId: data.campaign.id } });
 			await router.invalidate();
 		} catch (error) {
 			handleClientError(error);
@@ -236,7 +237,7 @@ function RouteComponent() {
 		try {
 			const moduleIds = modules.map((module) => module.id);
 			setModuleIds(moduleIds);
-			await updateCampaignRpc({
+			await updateCampaignClient({
 				data: { campaignId: data.campaign.id, moduleIds },
 			});
 			await router.invalidate();
@@ -250,7 +251,9 @@ function RouteComponent() {
 	return (
 		<Section>
 			<Section.Container gap={3}>
-				<Stack gap={0.25}>
+				<GeminiTest />
+
+				<Stack gap={0.5}>
 					<Text tag="h1" size="xl" family="gothic" color="muted" weight={300}>
 						Start a new campaign
 					</Text>
@@ -292,7 +295,7 @@ function RouteComponent() {
 				<Stack gap={1}>
 					<Row align="center" gap={0.5}>
 						<StepNumber number={1} completed={true} />
-						<Text size="lg">Upload rules and content</Text>
+						<Text size="lg">Rules, world-building, and content (modules)</Text>
 					</Row>
 
 					<Text color="muted">

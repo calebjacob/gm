@@ -6,7 +6,7 @@ type BaseButtonProps = {
 	size?: "sm" | "md" | "lg";
 	className?: string;
 	style?: React.CSSProperties;
-	color?: "action" | "success" | "danger" | "muted";
+	color?: "action" | "success" | "error" | "muted";
 	icon?: boolean;
 };
 

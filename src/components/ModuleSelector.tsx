@@ -50,8 +50,13 @@ const createModuleServer = createServerFn({
 	.handler(async function* ({ data }) {
 		try {
 			const name = data.file.name.split(".")[0] || "Untitled";
-			const uploadedFile = await uploadFileServer(data.file);
-			const textFile = await readTextFileServer(data.file);
+
+			const uploadedFile = await uploadFileServer({ file: data.file });
+
+			const textFile = await readTextFileServer({
+				file: data.file,
+				pageLimit: 1,
+			});
 
 			const module: ModuleSchema = {
 				id: crypto.randomUUID(),
@@ -119,7 +124,7 @@ const createModuleServer = createServerFn({
 				};
 
 				const categorizedChunks = await generateStructuredContentServer({
-					content: textFileChunk.content,
+					contents: textFileChunk.content,
 					systemInstruction: MODULE_INGESTION_PROMPT,
 					schema: z
 						.strictObject({

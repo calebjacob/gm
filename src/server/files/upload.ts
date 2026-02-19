@@ -6,7 +6,13 @@ import { serverEnv } from "@/server/env";
 const UPLOADS_PATH = path.join(process.cwd(), serverEnv.UPLOADS_PATH);
 
 export const uploadFileBufferServer = createServerOnlyFn(
-	async (buffer: Buffer<ArrayBuffer>, fileName: string) => {
+	async ({
+		buffer,
+		fileName,
+	}: {
+		buffer: Buffer<ArrayBuffer>;
+		fileName: string;
+	}) => {
 		const sanitizedFileName = fileName.replace(/[^a-zA-Z0-9.-_]/g, "");
 		const filePath = `${crypto.randomUUID()}-${sanitizedFileName}`;
 
@@ -17,7 +23,12 @@ export const uploadFileBufferServer = createServerOnlyFn(
 	},
 );
 
-export const uploadFileServer = createServerOnlyFn(async (file: File) => {
-	const arrayBuffer = await file.arrayBuffer();
-	return uploadFileBufferServer(Buffer.from(arrayBuffer), file.name);
-});
+export const uploadFileServer = createServerOnlyFn(
+	async ({ file }: { file: File }) => {
+		const arrayBuffer = await file.arrayBuffer();
+		return uploadFileBufferServer({
+			buffer: Buffer.from(arrayBuffer),
+			fileName: file.name,
+		});
+	},
+);

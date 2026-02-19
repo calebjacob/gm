@@ -47,26 +47,6 @@ CREATE INDEX "indexCampaignsModulesCampaignId" ON "campaignsModules" (
 );
 CREATE INDEX "indexCampaignsModulesModuleId" ON "campaignsModules" ("moduleId");
 
-CREATE TABLE "characters" (
-  "id" TEXT PRIMARY KEY,
-  "campaignId" TEXT NOT NULL,
-  FOREIGN KEY ("campaignId") REFERENCES "campaigns" ("id") ON DELETE CASCADE,
-  "abilities" TEXT,
-  "class" TEXT,
-  "description" TEXT,
-  "equipment" TEXT,
-  "imagePath" TEXT,
-  "inventory" TEXT,
-  "name" TEXT NOT NULL,
-  "species" TEXT,
-  "statistics" TEXT,
-  "statuses" TEXT,
-  "createdAt" TEXT NOT NULL,
-  "updatedAt" TEXT NOT NULL
-);
-
-CREATE INDEX "indexCharactersCampaignId" ON "characters" ("campaignId");
-
 CREATE TABLE "campaignMessages" (
   "id" TEXT PRIMARY KEY,
   "campaignId" TEXT NOT NULL,

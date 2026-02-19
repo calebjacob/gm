@@ -21,9 +21,15 @@ const wordsPerChunk = 500;
 const overlapWordsPerChunk = 50;
 
 export const readTextFileServer = createServerOnlyFn(
-	async (file: File): Promise<ReadTextFileResult> => {
+	async ({
+		file,
+		pageLimit,
+	}: {
+		file: File;
+		pageLimit?: number;
+	}): Promise<ReadTextFileResult> => {
 		if (file.type === "application/pdf") {
-			return readPdfFile(file);
+			return readPdfFile({ file, pageLimit });
 		}
 
 		if (file.type === "text/plain" || file.type === "text/markdown") {
@@ -47,7 +53,13 @@ export const readTextFileServer = createServerOnlyFn(
 	},
 );
 
-async function readPdfFile(file: File): Promise<ReadTextFileResult> {
+async function readPdfFile({
+	file,
+	pageLimit,
+}: {
+	file: File;
+	pageLimit?: number;
+}): Promise<ReadTextFileResult> {
 	const chunks: ReadTextFileResult["chunks"] = [];
 	const arrayBuffer = await file.arrayBuffer();
 	const parser = new PDFParse({
@@ -57,6 +69,9 @@ async function readPdfFile(file: File): Promise<ReadTextFileResult> {
 
 	const pdfParserTextResult = await parser.getText({
 		parsePageInfo: true,
+		partial: pageLimit
+			? Array.from({ length: pageLimit }, (_, i) => i + 1)
+			: undefined,
 	});
 
 	for (const page of pdfParserTextResult.pages) {
@@ -78,10 +93,10 @@ async function readPdfFile(file: File): Promise<ReadTextFileResult> {
 	});
 
 	const image = Buffer.from(pdfParserScreenshotResult.pages[0].data);
-	const { filePath: coverImagePath } = await uploadFileBufferServer(
-		image,
-		"screenshot.png",
-	);
+	const { filePath: coverImagePath } = await uploadFileBufferServer({
+		buffer: image,
+		fileName: "module-cover.png",
+	});
 
 	await parser.destroy();
 

@@ -52,7 +52,7 @@
 		}
 	}
 
-	&[data-color="danger"] {
+	&[data-color="error"] {
 		background-color: var(--color-error-fill-light);
 		color: var(--color-error-text);
 		&:hover {
