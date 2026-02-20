@@ -23,7 +23,7 @@ export const migrateDatabaseServer = createServerOnlyFn(async (db: Client) => {
 
 			const sqlWithInjectedConfig = sql.replace(
 				`"embedding" F32_BLOB(0)`,
-				`"embedding" F32_BLOB(${serverEnv.EMBEDDING_DIMENSION})`,
+				`"embedding" F32_BLOB(${serverEnv.GOOGLE_EMBEDDING_DIMENSION})`,
 			);
 
 			await db.executeMultiple(sqlWithInjectedConfig);
@@ -32,7 +32,7 @@ export const migrateDatabaseServer = createServerOnlyFn(async (db: Client) => {
 				sql: `PRAGMA user_version = ${migrationVersion}`,
 			});
 		} catch (error) {
-			console.error(`Database migration failed: ${sqlFilePath}`);
+			console.error(`Database migration failed: ${sqlFilePath}`, error);
 			throw error;
 		}
 	}

@@ -1,12 +1,14 @@
 import { z } from "zod";
 import { isoDateTime } from "./date-time";
+import { rulesetSchema } from "./ruleset";
 
-export const campaignStatus = z.enum(["draft", "active", "completed"]);
+export const campaignStatusSchema = z.enum(["draft", "active", "completed"]);
 
 export const campaignSchema = z.object({
 	id: z.string(),
 	userId: z.string(),
-	status: campaignStatus,
+	ruleset: rulesetSchema,
+	status: campaignStatusSchema,
 	name: z.string(),
 	description: z.string().nullish(),
 	coverImagePath: z.string().nullish(),

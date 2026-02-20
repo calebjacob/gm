@@ -19,12 +19,12 @@ export const characterDetailsSchema = z.discriminatedUnion("ruleset", [
 		}),
 		species: z.array(z.string()).min(1),
 		description: z.string(),
-		experiencePoints: z.number().min(0),
-		hitPoints: {
-			current: z.number(),
-			max: z.number(),
-		},
-		items: z.array(
+		experiencePoints: z.number().int(),
+		hitPoints: z.object({
+			current: z.number().int(),
+			max: z.number().int(),
+		}),
+		inventory: z.array(
 			z.object({
 				name: z.string(),
 				equipped: z.boolean(),

@@ -8,8 +8,7 @@ CREATE TABLE "users" (
 
 CREATE TABLE "modules" (
   "id" TEXT PRIMARY KEY,
-  "userId" TEXT NOT NULL,
-  FOREIGN KEY ("userId") REFERENCES "users" ("id") ON DELETE CASCADE,
+  "userId" TEXT NOT NULL REFERENCES "users" ("id") ON DELETE CASCADE,
   "name" TEXT NOT NULL,
   "description" TEXT,
   "coverImagePath" TEXT,
@@ -22,10 +21,10 @@ CREATE INDEX "indexModulesUserId" ON "modules" ("userId");
 
 CREATE TABLE "campaigns" (
   "id" TEXT PRIMARY KEY,
-  "userId" TEXT NOT NULL,
-  FOREIGN KEY ("userId") REFERENCES "users" ("id") ON DELETE CASCADE,
-  "status" TEXT NOT NULL,
+  "userId" TEXT NOT NULL REFERENCES "users" ("id") ON DELETE CASCADE,
   "name" TEXT NOT NULL,
+  "status" TEXT NOT NULL,
+  "ruleset" TEXT NOT NULL,
   "description" TEXT,
   "coverImagePath" TEXT,
   "createdAt" TEXT NOT NULL,
@@ -36,10 +35,8 @@ CREATE INDEX "indexCampaignsUserId" ON "campaigns" ("userId");
 
 CREATE TABLE "campaignsModules" (
   "id" TEXT PRIMARY KEY,
-  "campaignId" TEXT NOT NULL,
-  FOREIGN KEY ("campaignId") REFERENCES "campaigns" ("id") ON DELETE CASCADE,
-  "moduleId" TEXT NOT NULL,
-  FOREIGN KEY ("moduleId") REFERENCES "modules" ("id") ON DELETE CASCADE
+  "campaignId" TEXT NOT NULL REFERENCES "campaigns" ("id") ON DELETE CASCADE,
+  "moduleId" TEXT NOT NULL REFERENCES "modules" ("id") ON DELETE CASCADE
 );
 
 CREATE INDEX "indexCampaignsModulesCampaignId" ON "campaignsModules" (
@@ -49,8 +46,7 @@ CREATE INDEX "indexCampaignsModulesModuleId" ON "campaignsModules" ("moduleId");
 
 CREATE TABLE "campaignMessages" (
   "id" TEXT PRIMARY KEY,
-  "campaignId" TEXT NOT NULL,
-  FOREIGN KEY ("campaignId") REFERENCES "campaigns" ("id") ON DELETE CASCADE,
+  "campaignId" TEXT NOT NULL REFERENCES "campaigns" ("id") ON DELETE CASCADE,
   "role" TEXT NOT NULL,
   "content" TEXT NOT NULL,
   "createdAt" TEXT NOT NULL,

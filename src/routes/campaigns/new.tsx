@@ -4,13 +4,14 @@ import { formatDistanceToNow } from "date-fns";
 import {
 	ArrowRightIcon,
 	EllipsisIcon,
+	NotebookTextIcon,
 	PlusIcon,
 	Trash2Icon,
-	TrashIcon,
 } from "lucide-react";
 import { useState } from "react";
 import { z } from "zod";
 import { GeminiTest } from "@/components/GeminiTest";
+import { Badge } from "@/components/lib/Badge";
 import { Button } from "@/components/lib/Button";
 import { Card } from "@/components/lib/Card";
 import { Icon } from "@/components/lib/Icon";
@@ -29,6 +30,7 @@ import {
 	type ModuleSchema,
 	moduleSchema,
 } from "@/schemas/module";
+import { rulesetDetails } from "@/schemas/ruleset";
 import { getCurrentUserId } from "@/server/auth";
 import { db } from "@/server/db";
 import { handleClientError } from "@/utils/errors";
@@ -99,6 +101,7 @@ const getResourcesServer = createServerFn({
 			const newCampaign: CampaignSchema = {
 				id: crypto.randomUUID(),
 				userId: getCurrentUserId(),
+				ruleset: "dnd-5e",
 				status: "draft",
 				name: "Untitled",
 				createdAt: new Date(),
@@ -107,8 +110,8 @@ const getResourcesServer = createServerFn({
 
 			await db.execute({
 				sql: `
-				INSERT INTO "campaigns" ("id", "userId", "status", "name", "description", "coverImagePath", "createdAt", "updatedAt")
-				VALUES ($id, $userId, $status, $name, $description, $coverImagePath, $createdAt, $updatedAt)
+				INSERT INTO "campaigns" ("id", "userId", "status", "name", "ruleset", "description", "coverImagePath", "createdAt", "updatedAt")
+				VALUES ($id, $userId, $status, $name, $ruleset, $description, $coverImagePath, $createdAt, $updatedAt)
 			`,
 				args: {
 					...newCampaign,
@@ -145,6 +148,7 @@ const getResourcesServer = createServerFn({
 		const campaignsModules = campaignsModulesSchema
 			.array()
 			.parse(campaignsModulesQuery.rows);
+
 		const selectedModuleIds = campaignsModules.map(
 			(campaignsModule) => campaignsModule.moduleId,
 		);
@@ -224,6 +228,9 @@ function RouteComponent() {
 	const removeCampaignClient = useServerFn(removeCampaignServer);
 	const [moduleIds, setModuleIds] = useState<string[]>([]);
 
+	const stepOneCompleted = data.selectedModuleIds.length > 0;
+	const stepTwoCompleted = data.characters.length > 0;
+
 	const removeCampaign = async () => {
 		try {
 			await removeCampaignClient({ data: { campaignId: data.campaign.id } });
@@ -250,58 +257,74 @@ function RouteComponent() {
 
 	return (
 		<Section>
-			<Section.Container gap={3}>
-				<GeminiTest />
+			<GeminiTest />
 
+			<Section.Container gap={3}>
 				<Stack gap={0.5}>
 					<Text tag="h1" size="xl" family="gothic" color="muted" weight={300}>
 						Start a new campaign
 					</Text>
 
-					<Row align="center" gap={0.5}>
-						<Text size="xs" color="muted">
-							Draft saved{" "}
-							{formatDistanceToNow(data.campaign.updatedAt, {
-								addSuffix: true,
-							})}
-						</Text>
+					<Row align="center" justify="space-between" gap={1}>
+						<Row align="center" gap={0.5}>
+							<Badge>
+								<Icon size={0.6}>
+									<NotebookTextIcon />
+								</Icon>
+								<Text weight={500}>
+									{rulesetDetails[data.campaign.ruleset].name}
+								</Text>
+							</Badge>
+						</Row>
 
-						<Menu>
-							<Button
-								icon
-								color="muted"
-								size="sm"
-								onClick={() => {
-									router.navigate({ to: "/campaigns/new" });
-								}}
-							>
-								<EllipsisIcon />
-							</Button>
+						<Row align="center" gap={0.5}>
+							<Text size="xs" color="muted">
+								Draft saved{" "}
+								{formatDistanceToNow(data.campaign.updatedAt, {
+									addSuffix: true,
+								})}
+							</Text>
 
-							<Menu.Dropdown>
-								<Menu.Section>
-									<Menu.Item onClick={removeCampaign}>
-										<Icon color="error" size={1}>
-											<Trash2Icon />
-										</Icon>
-										Discard Draft
-									</Menu.Item>
-								</Menu.Section>
-							</Menu.Dropdown>
-						</Menu>
+							<Menu>
+								<Button
+									icon
+									color="muted"
+									size="sm"
+									onClick={() => {
+										router.navigate({ to: "/campaigns/new" });
+									}}
+								>
+									<EllipsisIcon />
+								</Button>
+
+								<Menu.Dropdown>
+									<Menu.Section>
+										<Menu.Item onClick={removeCampaign}>
+											<Icon color="error" size={1}>
+												<Trash2Icon />
+											</Icon>
+											Discard Draft
+										</Menu.Item>
+									</Menu.Section>
+								</Menu.Dropdown>
+							</Menu>
+						</Row>
 					</Row>
 				</Stack>
 
 				<Stack gap={1}>
 					<Row align="center" gap={0.5}>
-						<StepNumber number={1} completed={true} />
-						<Text size="lg">Rules, world-building, and content (modules)</Text>
+						<StepNumber number={1} completed={stepOneCompleted} />
+						<Text size="lg">Shape your world</Text>
 					</Row>
 
 					<Text color="muted">
-						Most tabletop RPGs have a detailed set of core rules and
-						supplementary modules available in PDF format. Download them from an
-						official publisher and upload the files here.
+						Upload any number of content modules compatible with{" "}
+						<Text weight={500} tag="span" color="standard">
+							{rulesetDetails[data.campaign.ruleset].name}
+						</Text>{" "}
+						to define the setting of your campaign. This will determine the
+						stories, characters, and locations of your campaign.
 					</Text>
 
 					{/* TODO */}
@@ -313,7 +336,7 @@ function RouteComponent() {
 
 				<Stack gap={1}>
 					<Row align="center" gap={0.5}>
-						<StepNumber number={2} completed={false} />
+						<StepNumber number={2} completed={stepTwoCompleted} />
 						<Text size="lg">Create your characters</Text>
 					</Row>
 

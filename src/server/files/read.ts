@@ -15,10 +15,10 @@ type ReadTextFileResult = {
 	coverImagePath?: string;
 };
 
-// const wordsPerChunk = 1000;
-// const overlapWordsPerChunk = 100;
-const wordsPerChunk = 500;
-const overlapWordsPerChunk = 50;
+const wordsPerChunk = 1000;
+const overlapWordsPerChunk = 100;
+// const wordsPerChunk = 500;
+// const overlapWordsPerChunk = 50;
 
 export const readTextFileServer = createServerOnlyFn(
 	async ({
